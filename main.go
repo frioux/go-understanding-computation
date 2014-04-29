@@ -2,10 +2,12 @@ package main
 
 import "fmt"
 
+type Env map[string]Simple
+
 type Simple interface {
    simple()
    is_reducible() bool
-   reduce() Simple
+   reduce(Env) Simple
    Num() int
    Bool() bool
 }
@@ -28,7 +30,7 @@ func (s Boolean) is_reducible() bool {
    return false
 }
 
-func (s Boolean) reduce() Simple {
+func (s Boolean) reduce(Env) Simple {
    return s // this should never get called
 }
 
@@ -56,7 +58,7 @@ func (s Number) is_reducible() bool {
    return false
 }
 
-func (s Number) reduce() Simple {
+func (s Number) reduce(Env) Simple {
    return s // this should never get called
 }
 
@@ -85,11 +87,11 @@ func (s Add) is_reducible() bool {
    return true
 }
 
-func (s Add) reduce() Simple {
+func (s Add) reduce(environment Env) Simple {
    if s.Left.is_reducible() {
-      return Add{s.Left.reduce(), s.Right}
+      return Add{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
-      return Add{s.Left, s.Right.reduce()}
+      return Add{s.Left, s.Right.reduce(environment)}
    } else {
       return Number{s.Left.Num() + s.Right.Num()}
    }
@@ -120,11 +122,11 @@ func (s Multiply) is_reducible() bool {
    return true
 }
 
-func (s Multiply) reduce() Simple {
+func (s Multiply) reduce(environment Env) Simple {
    if s.Left.is_reducible() {
-      return Add{s.Left.reduce(), s.Right}
+      return Add{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
-      return Add{s.Left, s.Right.reduce()}
+      return Add{s.Left, s.Right.reduce(environment)}
    } else {
       return Number{s.Left.Num() * s.Right.Num()}
    }
@@ -155,11 +157,11 @@ func (s LessThan) is_reducible() bool {
    return true
 }
 
-func (s LessThan) reduce() Simple {
+func (s LessThan) reduce(environment Env) Simple {
    if s.Left.is_reducible() {
-      return LessThan{s.Left.reduce(), s.Right}
+      return LessThan{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
-      return LessThan{s.Left, s.Right.reduce()}
+      return LessThan{s.Left, s.Right.reduce(environment)}
    } else {
       if s.Left.Num() < s.Right.Num() {
          return Boolean{true}
@@ -179,12 +181,41 @@ func (s LessThan) Bool() bool { // this should never get called
 
 // }}}
 
+type Variable struct { // {{{
+   name string
+}
+
+func (s Variable) simple() { }
+
+func (s Variable) String() string {
+   return s.name
+}
+
+func (s Variable) is_reducible() bool {
+   return true
+}
+
+func (s Variable) reduce(environment Env) Simple {
+   return environment[s.name]
+}
+
+func (s Variable) Num() int { // this should never get called
+   return -999
+}
+
+func (s Variable) Bool() bool { // this should never get called
+   return false
+}
+
+// }}}
+
 type Machine struct { // {{{
    expression Simple
+   environment Env
 }
 
 func (m *Machine) step() {
-   m.expression = m.expression.reduce()
+   m.expression = m.expression.reduce(m.environment)
 }
 
 func (m Machine) run() {
@@ -201,13 +232,21 @@ func main() {
    var machine Machine = Machine{Add{
       Multiply{Number{1}, Number{2}},
       Multiply{Number{3}, Number{4}},
-   }};
+   }, map[string]Simple {}};
    machine.run()
 
    Machine{
       LessThan{
          Multiply{Number{1}, Number{20}},
          Add{Number{100}, Number{-80}},
+      }, map[string]Simple {},
+   }.run()
+
+   Machine{
+      Multiply{
+         Variable{"a"}, Number{2},
+      }, map[string]Simple {
+         "a": Number{2},
       },
    }.run()
 }
