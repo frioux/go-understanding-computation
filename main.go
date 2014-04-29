@@ -4,6 +4,12 @@ import "fmt"
 
 type Env map[string]Expr
 
+type Stmt interface {
+   is_stmt()
+   is_reducible() bool
+   reduce(Env) (Stmt, Env)
+}
+
 type Expr interface {
    is_expr()
    is_reducible() bool
@@ -212,7 +218,7 @@ func (s Variable) Bool() bool { // this should never get called
 type DoNothing struct { // {{{
 }
 
-func (s DoNothing) is_expr() { }
+func (s DoNothing) is_stmt() { }
 
 func (s DoNothing) String() string {
    return "do-nothing"
@@ -222,8 +228,8 @@ func (s DoNothing) is_reducible() bool {
    return false
 }
 
-func (s DoNothing) reduce(environment Env) Expr { // this should never get called
-   return s
+func (s DoNothing) reduce(environment Env) (Stmt, Env) { // this should never get called
+   return s, environment
 }
 
 func (s DoNothing) Num() int { // this should never get called
@@ -234,9 +240,39 @@ func (s DoNothing) Bool() bool { // this should never get called
    return false
 }
 
-func (s DoNothing) Equal(o Expr) bool {
+func (s DoNothing) Equal(o Stmt) bool {
    _, ok := o.(DoNothing)
    return ok
+}
+
+// }}}
+
+type Assign struct { // {{{
+   name string
+   expression Expr
+}
+
+func (s Assign) is_stmt() { }
+
+func (s Assign) String() string {
+   return fmt.Sprintf("%s = %s", s.name, s.expression)
+}
+
+func (s Assign) is_reducible() bool {
+   return true
+}
+
+func (s Assign) reduce(environment Env) (Stmt, Env) {
+   if s.expression.is_reducible() {
+      return Assign{s.name, s.expression.reduce(environment)}, environment
+   } else {
+      var new_env Env = Env{}
+      for k, v := range environment {
+          new_env[k] = v
+      }
+      new_env[s.name] = s.expression
+      return DoNothing{}, new_env
+   }
 }
 
 // }}}
@@ -281,6 +317,22 @@ func main() {
          "a": Number{2},
       },
    }.run()
+
+   var stmt Stmt = Assign{"x", Add{Variable{"x"}, Number{1}}}
+   env  := Env{"x": Number{2}}
+   fmt.Println(stmt)
+
+   stmt, env = stmt.reduce(env)
+   fmt.Println(stmt)
+
+   stmt, env = stmt.reduce(env)
+   fmt.Println(stmt)
+   fmt.Println(env)
+
+   stmt, env = stmt.reduce(env)
+   fmt.Println(stmt)
+   fmt.Println(env)
+
 }
 
 // vim: foldmethod=marker
