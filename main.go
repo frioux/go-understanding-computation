@@ -6,7 +6,7 @@ type Simple interface {
    simple()
 }
 
-type Number struct {
+type Number struct { // {{{
    Num int
 }
 
@@ -16,7 +16,9 @@ func (s Number) String() string {
    return fmt.Sprintf("%d", s.Num)
 }
 
-type Add struct {
+// }}}
+
+type Add struct { // {{{
    Left Simple
    Right Simple
 }
@@ -27,7 +29,9 @@ func (s Add) String() string {
    return fmt.Sprintf("%s + %s", s.Left, s.Right)
 }
 
-type Multiply struct {
+// }}}
+
+type Multiply struct { // {{{
    Left Simple
    Right Simple
 }
@@ -38,9 +42,13 @@ func (s Multiply) String() string {
    return fmt.Sprintf("%s * %s", s.Left, s.Right)
 }
 
+// }}}
+
 func main() {
    fmt.Println(Add{
       Multiply{Number{1}, Number{2}},
       Multiply{Number{3}, Number{4}},
    })
 }
+
+// vim: foldmethod=marker
