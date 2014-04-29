@@ -209,6 +209,38 @@ func (s Variable) Bool() bool { // this should never get called
 
 // }}}
 
+type DoNothing struct { // {{{
+}
+
+func (s DoNothing) simple() { }
+
+func (s DoNothing) String() string {
+   return "do-nothing"
+}
+
+func (s DoNothing) is_reducible() bool {
+   return false
+}
+
+func (s DoNothing) reduce(environment Env) Simple { // this should never get called
+   return s
+}
+
+func (s DoNothing) Num() int { // this should never get called
+   return -999
+}
+
+func (s DoNothing) Bool() bool { // this should never get called
+   return false
+}
+
+func (s DoNothing) Equal(o Simple) bool {
+   _, ok := o.(DoNothing)
+   return ok
+}
+
+// }}}
+
 type Machine struct { // {{{
    expression Simple
    environment Env
