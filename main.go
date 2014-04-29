@@ -2,12 +2,12 @@ package main
 
 import "fmt"
 
-type Env map[string]Simple
+type Env map[string]Expr
 
-type Simple interface {
-   simple()
+type Expr interface {
+   is_expr()
    is_reducible() bool
-   reduce(Env) Simple
+   reduce(Env) Expr
    Num() int
    Bool() bool
 }
@@ -16,7 +16,7 @@ type Boolean struct { // {{{
    boolean bool
 }
 
-func (s Boolean) simple() { }
+func (s Boolean) is_expr() { }
 
 func (s Boolean) String() string {
    if s.boolean {
@@ -30,7 +30,7 @@ func (s Boolean) is_reducible() bool {
    return false
 }
 
-func (s Boolean) reduce(Env) Simple {
+func (s Boolean) reduce(Env) Expr {
    return s // this should never get called
 }
 
@@ -48,7 +48,7 @@ type Number struct { // {{{
    num int
 }
 
-func (s Number) simple() { }
+func (s Number) is_expr() { }
 
 func (s Number) String() string {
    return fmt.Sprintf("%d", s.num)
@@ -58,7 +58,7 @@ func (s Number) is_reducible() bool {
    return false
 }
 
-func (s Number) reduce(Env) Simple {
+func (s Number) reduce(Env) Expr {
    return s // this should never get called
 }
 
@@ -73,11 +73,11 @@ func (s Number) Bool() bool { // this should never get called
 // }}}
 
 type Add struct { // {{{
-   Left Simple
-   Right Simple
+   Left Expr
+   Right Expr
 }
 
-func (s Add) simple() { }
+func (s Add) is_expr() { }
 
 func (s Add) String() string {
    return fmt.Sprintf("%s + %s", s.Left, s.Right)
@@ -87,7 +87,7 @@ func (s Add) is_reducible() bool {
    return true
 }
 
-func (s Add) reduce(environment Env) Simple {
+func (s Add) reduce(environment Env) Expr {
    if s.Left.is_reducible() {
       return Add{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
@@ -108,11 +108,11 @@ func (s Add) Bool() bool { // this should never get called
 // }}}
 
 type Multiply struct { // {{{
-   Left Simple
-   Right Simple
+   Left Expr
+   Right Expr
 }
 
-func (s Multiply) simple() { }
+func (s Multiply) is_expr() { }
 
 func (s Multiply) String() string {
    return fmt.Sprintf("%s * %s", s.Left, s.Right)
@@ -122,7 +122,7 @@ func (s Multiply) is_reducible() bool {
    return true
 }
 
-func (s Multiply) reduce(environment Env) Simple {
+func (s Multiply) reduce(environment Env) Expr {
    if s.Left.is_reducible() {
       return Add{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
@@ -143,11 +143,11 @@ func (s Multiply) Bool() bool { // this should never get called
 // }}}
 
 type LessThan struct { // {{{
-   Left Simple
-   Right Simple
+   Left Expr
+   Right Expr
 }
 
-func (s LessThan) simple() { }
+func (s LessThan) is_expr() { }
 
 func (s LessThan) String() string {
    return fmt.Sprintf("%s < %s", s.Left, s.Right)
@@ -157,7 +157,7 @@ func (s LessThan) is_reducible() bool {
    return true
 }
 
-func (s LessThan) reduce(environment Env) Simple {
+func (s LessThan) reduce(environment Env) Expr {
    if s.Left.is_reducible() {
       return LessThan{s.Left.reduce(environment), s.Right}
    } else if s.Right.is_reducible() {
@@ -185,7 +185,7 @@ type Variable struct { // {{{
    name string
 }
 
-func (s Variable) simple() { }
+func (s Variable) is_expr() { }
 
 func (s Variable) String() string {
    return s.name
@@ -195,7 +195,7 @@ func (s Variable) is_reducible() bool {
    return true
 }
 
-func (s Variable) reduce(environment Env) Simple {
+func (s Variable) reduce(environment Env) Expr {
    return environment[s.name]
 }
 
@@ -212,7 +212,7 @@ func (s Variable) Bool() bool { // this should never get called
 type DoNothing struct { // {{{
 }
 
-func (s DoNothing) simple() { }
+func (s DoNothing) is_expr() { }
 
 func (s DoNothing) String() string {
    return "do-nothing"
@@ -222,7 +222,7 @@ func (s DoNothing) is_reducible() bool {
    return false
 }
 
-func (s DoNothing) reduce(environment Env) Simple { // this should never get called
+func (s DoNothing) reduce(environment Env) Expr { // this should never get called
    return s
 }
 
@@ -234,7 +234,7 @@ func (s DoNothing) Bool() bool { // this should never get called
    return false
 }
 
-func (s DoNothing) Equal(o Simple) bool {
+func (s DoNothing) Equal(o Expr) bool {
    _, ok := o.(DoNothing)
    return ok
 }
@@ -242,7 +242,7 @@ func (s DoNothing) Equal(o Simple) bool {
 // }}}
 
 type Machine struct { // {{{
-   expression Simple
+   expression Expr
    environment Env
 }
 
@@ -264,20 +264,20 @@ func main() {
    var machine Machine = Machine{Add{
       Multiply{Number{1}, Number{2}},
       Multiply{Number{3}, Number{4}},
-   }, map[string]Simple {}};
+   }, map[string]Expr {}};
    machine.run()
 
    Machine{
       LessThan{
          Multiply{Number{1}, Number{20}},
          Add{Number{100}, Number{-80}},
-      }, map[string]Simple {},
+      }, map[string]Expr {},
    }.run()
 
    Machine{
       Multiply{
          Variable{"a"}, Number{2},
-      }, map[string]Simple {
+      }, map[string]Expr {
          "a": Number{2},
       },
    }.run()
