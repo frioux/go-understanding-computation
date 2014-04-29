@@ -278,61 +278,34 @@ func (s Assign) reduce(environment Env) (Stmt, Env) {
 // }}}
 
 type Machine struct { // {{{
-   expression Expr
+   statement Stmt
    environment Env
 }
 
 func (m *Machine) step() {
-   m.expression = m.expression.reduce(m.environment)
+   m.statement, m.environment = m.statement.reduce(m.environment)
 }
 
 func (m Machine) run() {
-   for m.expression.is_reducible() {
-      fmt.Println(m.expression)
+   for m.statement.is_reducible() {
+      fmt.Println(m.statement)
+      fmt.Println(m.environment)
       m.step()
    }
-   fmt.Println(m.expression)
+   fmt.Println(m.statement)
+   fmt.Println(m.environment)
 }
 
 // }}}
 
 func main() {
-   var machine Machine = Machine{Add{
-      Multiply{Number{1}, Number{2}},
-      Multiply{Number{3}, Number{4}},
-   }, map[string]Expr {}};
-   machine.run()
-
    Machine{
-      LessThan{
-         Multiply{Number{1}, Number{20}},
-         Add{Number{100}, Number{-80}},
-      }, map[string]Expr {},
-   }.run()
-
-   Machine{
-      Multiply{
-         Variable{"a"}, Number{2},
+      Assign{
+         "a", Add{Number{2}, Variable{"a"}},
       }, map[string]Expr {
          "a": Number{2},
       },
    }.run()
-
-   var stmt Stmt = Assign{"x", Add{Variable{"x"}, Number{1}}}
-   env  := Env{"x": Number{2}}
-   fmt.Println(stmt)
-
-   stmt, env = stmt.reduce(env)
-   fmt.Println(stmt)
-
-   stmt, env = stmt.reduce(env)
-   fmt.Println(stmt)
-   fmt.Println(env)
-
-   stmt, env = stmt.reduce(env)
-   fmt.Println(stmt)
-   fmt.Println(env)
-
 }
 
 // vim: foldmethod=marker
