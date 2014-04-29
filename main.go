@@ -4,6 +4,7 @@ import "fmt"
 
 type Simple interface {
    simple()
+   is_reducible() bool
 }
 
 type Number struct { // {{{
@@ -14,6 +15,10 @@ func (s Number) simple() { }
 
 func (s Number) String() string {
    return fmt.Sprintf("%d", s.Num)
+}
+
+func (s Number) is_reducible() bool {
+   return false
 }
 
 // }}}
@@ -29,6 +34,10 @@ func (s Add) String() string {
    return fmt.Sprintf("%s + %s", s.Left, s.Right)
 }
 
+func (s Add) is_reducible() bool {
+   return true
+}
+
 // }}}
 
 type Multiply struct { // {{{
@@ -40,6 +49,10 @@ func (s Multiply) simple() { }
 
 func (s Multiply) String() string {
    return fmt.Sprintf("%s * %s", s.Left, s.Right)
+}
+
+func (s Multiply) is_reducible() bool {
+   return true
 }
 
 // }}}
