@@ -338,9 +338,9 @@ func main() {
       If{
          Variable{"x"},
          Assign{"y", Number{1}},
-         Assign{"y", Number{2}},
+         DoNothing{},
       }, map[string]Expr {
-         "x": Boolean{true},
+         "x": Boolean{false},
       },
    }.run()
 }
