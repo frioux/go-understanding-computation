@@ -95,22 +95,30 @@ func (s Multiply) Num() int { // this should never get called
 
 // }}}
 
+type Machine struct { // {{{
+   expression Simple
+}
+
+func (m *Machine) step() {
+   m.expression = m.expression.reduce()
+}
+
+func (m Machine) run() {
+   for m.expression.is_reducible() {
+      fmt.Println(m.expression)
+      m.step()
+   }
+   fmt.Println(m.expression)
+}
+
+// }}}
+
 func main() {
-   var expression Simple = Add{
+   var machine Machine = Machine{Add{
       Multiply{Number{1}, Number{2}},
       Multiply{Number{3}, Number{4}},
-   };
-   fmt.Println(expression)
-   fmt.Println(expression.is_reducible())
-   expression = expression.reduce()
-   fmt.Println(expression)
-   fmt.Println(expression.is_reducible())
-   expression = expression.reduce()
-   fmt.Println(expression)
-   fmt.Println(expression.is_reducible())
-   expression = expression.reduce()
-   fmt.Println(expression)
-   fmt.Println(expression.is_reducible())
+   }};
+   machine.run()
 }
 
 // vim: foldmethod=marker
