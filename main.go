@@ -7,7 +7,40 @@ type Simple interface {
    is_reducible() bool
    reduce() Simple
    Num() int
+   Bool() bool
 }
+
+type Boolean struct { // {{{
+   boolean bool
+}
+
+func (s Boolean) simple() { }
+
+func (s Boolean) String() string {
+   if s.boolean {
+      return "true"
+   } else {
+      return "false"
+   }
+}
+
+func (s Boolean) is_reducible() bool {
+   return false
+}
+
+func (s Boolean) reduce() Simple {
+   return s // this should never get called
+}
+
+func (s Boolean) Num() int { // this should never get called
+   return -999
+}
+
+func (s Boolean) Bool() bool {
+   return s.boolean
+}
+
+// }}}
 
 type Number struct { // {{{
    num int
@@ -29,6 +62,10 @@ func (s Number) reduce() Simple {
 
 func (s Number) Num() int {
    return s.num
+}
+
+func (s Number) Bool() bool { // this should never get called
+   return false
 }
 
 // }}}
@@ -62,6 +99,10 @@ func (s Add) Num() int { // this should never get called
    return -999
 }
 
+func (s Add) Bool() bool { // this should never get called
+   return false
+}
+
 // }}}
 
 type Multiply struct { // {{{
@@ -93,6 +134,49 @@ func (s Multiply) Num() int { // this should never get called
    return -999
 }
 
+func (s Multiply) Bool() bool { // this should never get called
+   return false
+}
+
+// }}}
+
+type LessThan struct { // {{{
+   Left Simple
+   Right Simple
+}
+
+func (s LessThan) simple() { }
+
+func (s LessThan) String() string {
+   return fmt.Sprintf("%s < %s", s.Left, s.Right)
+}
+
+func (s LessThan) is_reducible() bool {
+   return true
+}
+
+func (s LessThan) reduce() Simple {
+   if s.Left.is_reducible() {
+      return LessThan{s.Left.reduce(), s.Right}
+   } else if s.Right.is_reducible() {
+      return LessThan{s.Left, s.Right.reduce()}
+   } else {
+      if s.Left.Num() < s.Right.Num() {
+         return Boolean{true}
+      } else {
+         return Boolean{false}
+      }
+   }
+}
+
+func (s LessThan) Num() int { // this should never get called
+   return -999
+}
+
+func (s LessThan) Bool() bool { // this should never get called
+   return false
+}
+
 // }}}
 
 type Machine struct { // {{{
@@ -119,6 +203,13 @@ func main() {
       Multiply{Number{3}, Number{4}},
    }};
    machine.run()
+
+   Machine{
+      LessThan{
+         Multiply{Number{1}, Number{20}},
+         Add{Number{100}, Number{-80}},
+      },
+   }.run()
 }
 
 // vim: foldmethod=marker
