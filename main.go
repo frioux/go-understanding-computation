@@ -5,20 +5,30 @@ import "fmt"
 type Simple interface {
    simple()
    is_reducible() bool
+   reduce() Simple
+   Num() int
 }
 
 type Number struct { // {{{
-   Num int
+   num int
 }
 
 func (s Number) simple() { }
 
 func (s Number) String() string {
-   return fmt.Sprintf("%d", s.Num)
+   return fmt.Sprintf("%d", s.num)
 }
 
 func (s Number) is_reducible() bool {
    return false
+}
+
+func (s Number) reduce() Simple {
+   return s // this should never get called
+}
+
+func (s Number) Num() int {
+   return s.num
 }
 
 // }}}
@@ -38,6 +48,20 @@ func (s Add) is_reducible() bool {
    return true
 }
 
+func (s Add) reduce() Simple {
+   if s.Left.is_reducible() {
+      return Add{s.Left.reduce(), s.Right}
+   } else if s.Right.is_reducible() {
+      return Add{s.Left, s.Right.reduce()}
+   } else {
+      return Number{s.Left.Num() + s.Right.Num()}
+   }
+}
+
+func (s Add) Num() int { // this should never get called
+   return -999
+}
+
 // }}}
 
 type Multiply struct { // {{{
@@ -55,13 +79,38 @@ func (s Multiply) is_reducible() bool {
    return true
 }
 
+func (s Multiply) reduce() Simple {
+   if s.Left.is_reducible() {
+      return Add{s.Left.reduce(), s.Right}
+   } else if s.Right.is_reducible() {
+      return Add{s.Left, s.Right.reduce()}
+   } else {
+      return Number{s.Left.Num() * s.Right.Num()}
+   }
+}
+
+func (s Multiply) Num() int { // this should never get called
+   return -999
+}
+
 // }}}
 
 func main() {
-   fmt.Println(Add{
+   var expression Simple = Add{
       Multiply{Number{1}, Number{2}},
       Multiply{Number{3}, Number{4}},
-   })
+   };
+   fmt.Println(expression)
+   fmt.Println(expression.is_reducible())
+   expression = expression.reduce()
+   fmt.Println(expression)
+   fmt.Println(expression.is_reducible())
+   expression = expression.reduce()
+   fmt.Println(expression)
+   fmt.Println(expression.is_reducible())
+   expression = expression.reduce()
+   fmt.Println(expression)
+   fmt.Println(expression.is_reducible())
 }
 
 // vim: foldmethod=marker
