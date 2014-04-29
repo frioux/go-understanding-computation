@@ -12,6 +12,10 @@ type Number struct {
 
 func (s Number) simple() { }
 
+func (s Number) String() string {
+   return fmt.Sprintf("%d", s.Num)
+}
+
 type Add struct {
    Left Simple
    Right Simple
@@ -19,12 +23,20 @@ type Add struct {
 
 func (s Add) simple() { }
 
+func (s Add) String() string {
+   return fmt.Sprintf("%s + %s", s.Left, s.Right)
+}
+
 type Multiply struct {
    Left Simple
    Right Simple
 }
 
 func (s Multiply) simple() { }
+
+func (s Multiply) String() string {
+   return fmt.Sprintf("%s * %s", s.Left, s.Right)
+}
 
 func main() {
    fmt.Println(Add{
