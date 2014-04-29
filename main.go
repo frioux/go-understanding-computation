@@ -277,6 +277,41 @@ func (s Assign) reduce(environment Env) (Stmt, Env) {
 
 // }}}
 
+type If struct { // {{{
+   expression Expr
+   consequence Stmt
+   alternative Stmt
+}
+
+func (s If) is_stmt() { }
+
+func (s If) String() string {
+   return fmt.Sprintf(
+      "if (%s) { %s } else { %s }",
+      s.expression, s.consequence, s.alternative,
+   )
+}
+
+func (s If) is_reducible() bool {
+   return true
+}
+
+func (s If) reduce(environment Env) (Stmt, Env) {
+   if s.expression.is_reducible() {
+      return If{
+         s.expression.reduce(environment), s.consequence, s.alternative,
+      }, environment
+   } else {
+      if s.expression.Bool() {
+         return s.consequence, environment
+      } else {
+         return s.alternative, environment
+      }
+   }
+}
+
+// }}}
+
 type Machine struct { // {{{
    statement Stmt
    environment Env
@@ -300,10 +335,12 @@ func (m Machine) run() {
 
 func main() {
    Machine{
-      Assign{
-         "a", Add{Number{2}, Variable{"a"}},
+      If{
+         Variable{"x"},
+         Assign{"y", Number{1}},
+         Assign{"y", Number{2}},
       }, map[string]Expr {
-         "a": Number{2},
+         "x": Boolean{true},
       },
    }.run()
 }
