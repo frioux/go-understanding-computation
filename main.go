@@ -356,8 +356,8 @@ func (m *Machine) step() {
 
 func (m Machine) run() {
    for m.statement.is_reducible() {
-      fmt.Println(m.statement)
-      fmt.Println(m.environment)
+      fmt.Println("Code: ", m.statement)
+      fmt.Println("Env : ", m.environment)
       m.step()
    }
    fmt.Println(m.statement)
