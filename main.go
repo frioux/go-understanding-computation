@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+   "fmt"
+)
 
 type Env map[string]Expr
 
@@ -345,6 +347,37 @@ func (s Sequence) reduce(environment Env) (Stmt, Env) {
 
 // }}}
 
+type While struct { // {{{
+   expression Expr
+   statement Stmt
+}
+
+func (s While) is_stmt() { }
+
+func (s While) String() string {
+   return fmt.Sprintf(
+      "while (%s) { %s }",
+      s.expression, s.statement,
+   )
+}
+
+func (s While) is_reducible() bool {
+   return true
+}
+
+func (s While) reduce(environment Env) (Stmt, Env) {
+   return If{
+      s.expression,
+      Sequence{
+         s.statement,
+         While{s.expression, s.statement},
+      },
+      DoNothing{},
+   }, environment
+}
+
+// }}}
+
 type Machine struct { // {{{
    statement Stmt
    environment Env
@@ -368,16 +401,16 @@ func (m Machine) run() {
 
 func main() {
    Machine{
-      If{
-         Variable{"x"},
-         Assign{"y", Number{1}},
+      Sequence{
          Sequence{
-            Assign{"x", Number{1}},
-            Assign{"z", Number{1}},
+            Assign{"y", Number{-10}},
+            While{
+               LessThan{Variable{"y"}, Number{0}},
+               Assign{"y", Add{Variable{"y"}, Number{1}}},
+            },
          },
-      }, map[string]Expr {
-         "x": Boolean{false},
-      },
+         Assign{"z", Number{1}},
+      }, map[string]Expr {},
    }.run()
 }
 
