@@ -312,6 +312,39 @@ func (s If) reduce(environment Env) (Stmt, Env) {
 
 // }}}
 
+type Sequence struct { // {{{
+   left Stmt
+   right Stmt
+}
+
+func (s Sequence) is_stmt() { }
+
+func (s Sequence) String() string {
+   return fmt.Sprintf(
+      "%s; %s",
+      s.left, s.right,
+   )
+}
+
+func (s Sequence) is_reducible() bool {
+   return true
+}
+
+func (s Sequence) reduce(environment Env) (Stmt, Env) {
+   if s.left.is_reducible() {
+      new_l, env := s.left.reduce(environment)
+      return Sequence{
+         new_l, s.right,
+      }, env
+   } else if s.right.is_reducible() {
+      return s.right, environment
+   } else {
+      return DoNothing{}, environment // this should never happen
+   }
+}
+
+// }}}
+
 type Machine struct { // {{{
    statement Stmt
    environment Env
@@ -338,7 +371,10 @@ func main() {
       If{
          Variable{"x"},
          Assign{"y", Number{1}},
-         DoNothing{},
+         Sequence{
+            Assign{"x", Number{1}},
+            Assign{"z", Number{1}},
+         },
       }, map[string]Expr {
          "x": Boolean{false},
       },
