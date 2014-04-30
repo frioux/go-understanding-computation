@@ -8,16 +8,14 @@ type Env map[string]Expr
 
 type Stmt interface {
    is_stmt()
-   is_reducible() bool
-   reduce(Env) (Stmt, Env)
+   evaluate(Env) Env
 }
 
 type Expr interface {
    is_expr()
-   is_reducible() bool
-   reduce(Env) Expr
-   Num() int
-   Bool() bool
+   evaluate(Env) Expr
+   asNum(Env) int
+   asBool(Env) bool
 }
 
 type Boolean struct { // {{{
@@ -34,19 +32,15 @@ func (s Boolean) String() string {
    }
 }
 
-func (s Boolean) is_reducible() bool {
-   return false
+func (s Boolean) evaluate(Env) Expr {
+   return s
 }
 
-func (s Boolean) reduce(Env) Expr {
-   return s // this should never get called
+func (s Boolean) asNum(Env) int {
+   return -999 // should never get called
 }
 
-func (s Boolean) Num() int { // this should never get called
-   return -999
-}
-
-func (s Boolean) Bool() bool {
+func (s Boolean) asBool(Env) bool {
    return s.boolean
 }
 
@@ -62,20 +56,16 @@ func (s Number) String() string {
    return fmt.Sprintf("%d", s.num)
 }
 
-func (s Number) is_reducible() bool {
-   return false
+func (s Number) evaluate(Env) Expr {
+   return s
 }
 
-func (s Number) reduce(Env) Expr {
-   return s // this should never get called
+func (s Number) asBool(Env) bool {
+   return false // should never get called
 }
 
-func (s Number) Num() int {
+func (s Number) asNum(Env) int {
    return s.num
-}
-
-func (s Number) Bool() bool { // this should never get called
-   return false
 }
 
 // }}}
@@ -91,26 +81,18 @@ func (s Add) String() string {
    return fmt.Sprintf("%s + %s", s.Left, s.Right)
 }
 
-func (s Add) is_reducible() bool {
-   return true
-}
-
-func (s Add) reduce(environment Env) Expr {
-   if s.Left.is_reducible() {
-      return Add{s.Left.reduce(environment), s.Right}
-   } else if s.Right.is_reducible() {
-      return Add{s.Left, s.Right.reduce(environment)}
-   } else {
-      return Number{s.Left.Num() + s.Right.Num()}
+func (s Add) evaluate(e Env) Expr {
+   return Number{
+      s.Left.evaluate(e).asNum(e) + s.Right.evaluate(e).asNum(e),
    }
 }
 
-func (s Add) Num() int { // this should never get called
-   return -999
+func (s Add) asNum(e Env) int {
+   return s.evaluate(e).asNum(e)
 }
 
-func (s Add) Bool() bool { // this should never get called
-   return false
+func (s Add) asBool(e Env) bool {
+   return s.evaluate(e).asBool(e)
 }
 
 // }}}
@@ -126,26 +108,16 @@ func (s Multiply) String() string {
    return fmt.Sprintf("%s * %s", s.Left, s.Right)
 }
 
-func (s Multiply) is_reducible() bool {
-   return true
+func (s Multiply) evaluate(e Env) Expr {
+   return Number{s.Left.asNum(e) * s.Right.asNum(e)}
 }
 
-func (s Multiply) reduce(environment Env) Expr {
-   if s.Left.is_reducible() {
-      return Add{s.Left.reduce(environment), s.Right}
-   } else if s.Right.is_reducible() {
-      return Add{s.Left, s.Right.reduce(environment)}
-   } else {
-      return Number{s.Left.Num() * s.Right.Num()}
-   }
+func (s Multiply) asNum(e Env) int {
+   return s.evaluate(e).asNum(e)
 }
 
-func (s Multiply) Num() int { // this should never get called
-   return -999
-}
-
-func (s Multiply) Bool() bool { // this should never get called
-   return false
+func (s Multiply) asBool(e Env) bool {
+   return s.evaluate(e).asBool(e)
 }
 
 // }}}
@@ -161,30 +133,16 @@ func (s LessThan) String() string {
    return fmt.Sprintf("%s < %s", s.Left, s.Right)
 }
 
-func (s LessThan) is_reducible() bool {
-   return true
+func (s LessThan) evaluate(e Env) Expr {
+   return Boolean{s.Left.asNum(e) < s.Right.asNum(e)}
 }
 
-func (s LessThan) reduce(environment Env) Expr {
-   if s.Left.is_reducible() {
-      return LessThan{s.Left.reduce(environment), s.Right}
-   } else if s.Right.is_reducible() {
-      return LessThan{s.Left, s.Right.reduce(environment)}
-   } else {
-      if s.Left.Num() < s.Right.Num() {
-         return Boolean{true}
-      } else {
-         return Boolean{false}
-      }
-   }
+func (s LessThan) asNum(e Env) int {
+   return s.evaluate(e).asNum(e)
 }
 
-func (s LessThan) Num() int { // this should never get called
-   return -999
-}
-
-func (s LessThan) Bool() bool { // this should never get called
-   return false
+func (s LessThan) asBool(e Env) bool {
+   return s.evaluate(e).asBool(e)
 }
 
 // }}}
@@ -199,20 +157,16 @@ func (s Variable) String() string {
    return s.name
 }
 
-func (s Variable) is_reducible() bool {
-   return true
+func (s Variable) evaluate(e Env) Expr {
+   return e[s.name]
 }
 
-func (s Variable) reduce(environment Env) Expr {
-   return environment[s.name]
+func (s Variable) asNum(e Env) int {
+   return s.evaluate(e).asNum(e)
 }
 
-func (s Variable) Num() int { // this should never get called
-   return -999
-}
-
-func (s Variable) Bool() bool { // this should never get called
-   return false
+func (s Variable) asBool(e Env) bool {
+   return s.evaluate(e).asBool(e)
 }
 
 // }}}
@@ -226,25 +180,8 @@ func (s DoNothing) String() string {
    return "do-nothing"
 }
 
-func (s DoNothing) is_reducible() bool {
-   return false
-}
-
-func (s DoNothing) reduce(environment Env) (Stmt, Env) { // this should never get called
-   return s, environment
-}
-
-func (s DoNothing) Num() int { // this should never get called
-   return -999
-}
-
-func (s DoNothing) Bool() bool { // this should never get called
-   return false
-}
-
-func (s DoNothing) Equal(o Stmt) bool {
-   _, ok := o.(DoNothing)
-   return ok
+func (s DoNothing) evaluate(e Env) Env {
+   return e
 }
 
 // }}}
@@ -260,21 +197,13 @@ func (s Assign) String() string {
    return fmt.Sprintf("%s = %s", s.name, s.expression)
 }
 
-func (s Assign) is_reducible() bool {
-   return true
-}
-
-func (s Assign) reduce(environment Env) (Stmt, Env) {
-   if s.expression.is_reducible() {
-      return Assign{s.name, s.expression.reduce(environment)}, environment
-   } else {
-      var new_env Env = Env{}
-      for k, v := range environment {
-          new_env[k] = v
-      }
-      new_env[s.name] = s.expression
-      return DoNothing{}, new_env
+func (s Assign) evaluate(e Env) Env {
+   var new_env Env = Env{}
+   for k, v := range e {
+       new_env[k] = v
    }
+   new_env[s.name] = s.expression.evaluate(new_env)
+   return new_env
 }
 
 // }}}
@@ -294,21 +223,11 @@ func (s If) String() string {
    )
 }
 
-func (s If) is_reducible() bool {
-   return true
-}
-
-func (s If) reduce(environment Env) (Stmt, Env) {
-   if s.expression.is_reducible() {
-      return If{
-         s.expression.reduce(environment), s.consequence, s.alternative,
-      }, environment
+func (s If) evaluate(e Env) Env {
+   if s.expression.asBool(e) {
+      return s.consequence.evaluate(e)
    } else {
-      if s.expression.Bool() {
-         return s.consequence, environment
-      } else {
-         return s.alternative, environment
-      }
+      return s.alternative.evaluate(e)
    }
 }
 
@@ -328,21 +247,8 @@ func (s Sequence) String() string {
    )
 }
 
-func (s Sequence) is_reducible() bool {
-   return true
-}
-
-func (s Sequence) reduce(environment Env) (Stmt, Env) {
-   if s.left.is_reducible() {
-      new_l, env := s.left.reduce(environment)
-      return Sequence{
-         new_l, s.right,
-      }, env
-   } else if s.right.is_reducible() {
-      return s.right, environment
-   } else {
-      return DoNothing{}, environment // this should never happen
-   }
+func (s Sequence) evaluate(e Env) Env {
+   return s.right.evaluate(s.left.evaluate(e))
 }
 
 // }}}
@@ -361,57 +267,23 @@ func (s While) String() string {
    )
 }
 
-func (s While) is_reducible() bool {
-   return true
-}
-
-func (s While) reduce(environment Env) (Stmt, Env) {
-   return If{
-      s.expression,
-      Sequence{
-         s.statement,
-         While{s.expression, s.statement},
-      },
-      DoNothing{},
-   }, environment
-}
-
-// }}}
-
-type Machine struct { // {{{
-   statement Stmt
-   environment Env
-}
-
-func (m *Machine) step() {
-   m.statement, m.environment = m.statement.reduce(m.environment)
-}
-
-func (m Machine) run() {
-   for m.statement.is_reducible() {
-      fmt.Println("Code: ", m.statement)
-      fmt.Println("Env : ", m.environment)
-      m.step()
+func (s While) evaluate(e Env) Env {
+   var newEnv Env = e
+   for s.expression.asBool(newEnv) {
+      newEnv = s.statement.evaluate(newEnv)
    }
-   fmt.Println(m.statement)
-   fmt.Println(m.environment)
+   return newEnv
 }
 
 // }}}
 
 func main() {
-   Machine{
-      Sequence{
-         Sequence{
-            Assign{"y", Number{-10}},
-            While{
-               LessThan{Variable{"y"}, Number{0}},
-               Assign{"y", Add{Variable{"y"}, Number{1}}},
-            },
-         },
-         Assign{"z", Number{1}},
-      }, map[string]Expr {},
-   }.run()
+   e := Env{"x": Number{1}}
+   e = While{
+      LessThan{Variable{"x"}, Number{5}},
+      Assign{"x", Multiply{Variable{"x"}, Number{3}}},
+   }.evaluate(e)
+   fmt.Println(e)
 }
 
 // vim: foldmethod=marker
