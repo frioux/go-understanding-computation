@@ -9,11 +9,11 @@ type Expr interface {
 
 type FARule struct { // {{{
    state int
-   character rune
+   character byte
    next_state int
 }
 
-func (s FARule) does_apply_to(state int, character rune) bool {
+func (s FARule) does_apply_to(state int, character byte) bool {
    return s.state == state && s.character == character
 }
 
@@ -34,17 +34,17 @@ type DFARuleBook struct { // {{{
    rules []FARule
 }
 
-func (s DFARuleBook) next_state(state int, character rune) int {
+func (s DFARuleBook) next_state(state int, character byte) int {
    return s.rule_for(state, character).follow()
 }
 
-func (s DFARuleBook) rule_for(state int, character rune) FARule {
+func (s DFARuleBook) rule_for(state int, character byte) FARule {
    for i := 0; i < len(s.rules); i++ {
       if s.rules[i].does_apply_to(state, character) {
          return s.rules[i]
       }
    }
-   return FARule{1, '💀', 1}
+   return FARule{1, 'Z', 1}
 }
 
 // }}}
@@ -64,7 +64,7 @@ func (s DFA) is_accepting() bool {
    return false
 }
 
-func (s *DFA) read_character(character rune) {
+func (s *DFA) read_character(character byte) {
    s.current_state = s.rulebook.next_state(s.current_state, character)
 }
 
