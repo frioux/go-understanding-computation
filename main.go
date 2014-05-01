@@ -64,6 +64,10 @@ func (s DFA) is_accepting() bool {
    return false
 }
 
+func (s *DFA) read_character(character rune) {
+   s.current_state = s.rulebook.next_state(s.current_state, character)
+}
+
 // }}}
 
 func main() {
@@ -74,8 +78,16 @@ func main() {
          FARule{3, 'a', 3}, FARule{3, 'b', 3},
       },
    }
-   fmt.Println(DFA{1, []int {1, 3}, rulebook}.is_accepting())
-   fmt.Println(DFA{1, []int {3}, rulebook}.is_accepting())
+   dfa := DFA{1, []int{3}, rulebook}
+   fmt.Println(dfa.is_accepting())
+   dfa.read_character('b')
+   fmt.Println(dfa.is_accepting())
+   for x := 0; x < 3; x++ {
+      dfa.read_character('a')
+   }
+   fmt.Println(dfa.is_accepting())
+   dfa.read_character('b')
+   fmt.Println(dfa.is_accepting())
 }
 
 // vim: foldmethod=marker
