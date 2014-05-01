@@ -68,6 +68,12 @@ func (s *DFA) read_character(character byte) {
    s.current_state = s.rulebook.next_state(s.current_state, character)
 }
 
+func (s *DFA) read_string(str string) {
+   for x := 0; x < len(str); x++ {
+      s.read_character(str[x])
+   }
+}
+
 // }}}
 
 func main() {
@@ -80,13 +86,7 @@ func main() {
    }
    dfa := DFA{1, []int{3}, rulebook}
    fmt.Println(dfa.is_accepting())
-   dfa.read_character('b')
-   fmt.Println(dfa.is_accepting())
-   for x := 0; x < 3; x++ {
-      dfa.read_character('a')
-   }
-   fmt.Println(dfa.is_accepting())
-   dfa.read_character('b')
+   dfa.read_string("baaab");
    fmt.Println(dfa.is_accepting())
 }
 
