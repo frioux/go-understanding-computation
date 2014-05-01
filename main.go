@@ -86,6 +86,16 @@ func (s NFA) is_accepting() bool {
    return false
 }
 
+func (s *NFA) read_character(character byte) {
+   s.current_states = s.rulebook.next_states(s.current_states, character)
+}
+
+func (s *NFA) read_string(str string) {
+   for i := 0; i < len(str); i++ {
+      s.read_character(str[i])
+   }
+}
+
 // }}}
 
 func main() {
@@ -96,8 +106,18 @@ func main() {
          FARule{3, 'a', 4}, FARule{3, 'b', 4},
       },
    }
-   fmt.Println(NFA{States{1}, States{4}, rulebook}.is_accepting())
-   fmt.Println(NFA{States{1,2,4}, States{4}, rulebook}.is_accepting())
+   nfa := NFA{States{1}, States{4}, rulebook}
+   nfa.read_character('b');
+   fmt.Println(nfa.is_accepting())
+   nfa.read_character('a');
+   fmt.Println(nfa.is_accepting())
+   nfa.read_character('b');
+   fmt.Println(nfa.is_accepting())
+
+   nfa = NFA{States{1}, States{4}, rulebook}
+   fmt.Println(nfa.is_accepting())
+   nfa.read_string("bbbbb");
+   fmt.Println(nfa.is_accepting())
 }
 
 // vim: foldmethod=marker
