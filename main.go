@@ -76,6 +76,24 @@ func (s *DFA) read_string(str string) {
 
 // }}}
 
+type DFADesign struct { // {{{
+   start_state int
+   accept_states []int
+   rulebook DFARuleBook
+}
+
+func (s DFADesign) to_dfa() DFA {
+   return DFA{s.start_state, s.accept_states, s.rulebook}
+}
+
+func (s DFADesign) does_accept(str string) bool {
+   dfa := s.to_dfa()
+   dfa.read_string(str)
+   return dfa.is_accepting()
+}
+
+// }}}
+
 func main() {
    rulebook := DFARuleBook{
       []FARule{
@@ -84,10 +102,10 @@ func main() {
          FARule{3, 'a', 3}, FARule{3, 'b', 3},
       },
    }
-   dfa := DFA{1, []int{3}, rulebook}
-   fmt.Println(dfa.is_accepting())
-   dfa.read_string("baaab");
-   fmt.Println(dfa.is_accepting())
+   dfa_design := DFADesign{1, []int{3}, rulebook}
+   fmt.Println(dfa_design.does_accept("a"))
+   fmt.Println(dfa_design.does_accept("baa"))
+   fmt.Println(dfa_design.does_accept("baba"))
 }
 
 // vim: foldmethod=marker
