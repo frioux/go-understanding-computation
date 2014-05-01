@@ -49,6 +49,23 @@ func (s DFARuleBook) rule_for(state int, character rune) FARule {
 
 // }}}
 
+type DFA struct { // {{{
+   current_state int
+   accept_states []int
+   rulebook DFARuleBook
+}
+
+func (s DFA) is_accepting() bool {
+   for x := 0; x < len(s.accept_states); x++ {
+      if s.current_state == s.accept_states[x] {
+         return true
+      }
+   }
+   return false
+}
+
+// }}}
+
 func main() {
    rulebook := DFARuleBook{
       []FARule{
@@ -57,9 +74,8 @@ func main() {
          FARule{3, 'a', 3}, FARule{3, 'b', 3},
       },
    }
-   fmt.Println(rulebook.next_state(1, 'a'))
-   fmt.Println(rulebook.next_state(1, 'b'))
-   fmt.Println(rulebook.next_state(2, 'b'))
+   fmt.Println(DFA{1, []int {1, 3}, rulebook}.is_accepting())
+   fmt.Println(DFA{1, []int {3}, rulebook}.is_accepting())
 }
 
 // vim: foldmethod=marker
