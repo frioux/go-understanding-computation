@@ -2,11 +2,6 @@ package main
 
 import "fmt"
 
-type Expr interface {
-   is_expr()
-   asGo() string
-}
-
 type FARule struct { // {{{
    state int
    character byte
@@ -30,82 +25,59 @@ func (s FARule) String() string {
 
 // }}}
 
-type DFARuleBook struct { // {{{
+type States []int
+
+type NFARuleBook struct { // {{{
    rules []FARule
 }
 
-func (s DFARuleBook) next_state(state int, character byte) int {
-   return s.rule_for(state, character).follow()
-}
-
-func (s DFARuleBook) rule_for(state int, character byte) FARule {
-   for i := 0; i < len(s.rules); i++ {
-      if s.rules[i].does_apply_to(state, character) {
-         return s.rules[i]
+func (s NFARuleBook) next_states(states States, character byte) States {
+   set := make(map[int]bool)
+   for x := 0; x < len(states); x++ {
+      inner_states := s.follow_rules_for(states[x], character)
+      for y := 0; y < len(inner_states); y++ {
+         set[inner_states[y]] = true
       }
    }
-   return FARule{1, 'Z', 1}
+   ret := States{}
+   for k := range set {
+      ret = append(ret, k)
+   }
+   return ret
 }
 
-// }}}
-
-type DFA struct { // {{{
-   current_state int
-   accept_states []int
-   rulebook DFARuleBook
+func (s NFARuleBook) follow_rules_for(state int, character byte) States {
+   states := s.rules_for(state, character)
+   ret := States{}
+   for x := 0; x < len(states); x++ {
+      ret = append(ret, states[x].follow())
+   }
+   return ret
 }
 
-func (s DFA) is_accepting() bool {
-   for x := 0; x < len(s.accept_states); x++ {
-      if s.current_state == s.accept_states[x] {
-         return true
+func (s NFARuleBook) rules_for(state int, character byte) []FARule {
+   ret := []FARule{}
+   for x := 0; x < len(s.rules); x++ {
+      if s.rules[x].does_apply_to(state, character) {
+         ret = append(ret, s.rules[x])
       }
    }
-   return false
-}
-
-func (s *DFA) read_character(character byte) {
-   s.current_state = s.rulebook.next_state(s.current_state, character)
-}
-
-func (s *DFA) read_string(str string) {
-   for x := 0; x < len(str); x++ {
-      s.read_character(str[x])
-   }
-}
-
-// }}}
-
-type DFADesign struct { // {{{
-   start_state int
-   accept_states []int
-   rulebook DFARuleBook
-}
-
-func (s DFADesign) to_dfa() DFA {
-   return DFA{s.start_state, s.accept_states, s.rulebook}
-}
-
-func (s DFADesign) does_accept(str string) bool {
-   dfa := s.to_dfa()
-   dfa.read_string(str)
-   return dfa.is_accepting()
+   return ret
 }
 
 // }}}
 
 func main() {
-   rulebook := DFARuleBook{
+   rulebook := NFARuleBook{
       []FARule{
-         FARule{1, 'a', 2}, FARule{1, 'b', 1},
-         FARule{2, 'a', 2}, FARule{2, 'b', 3},
-         FARule{3, 'a', 3}, FARule{3, 'b', 3},
+         FARule{1, 'a', 1}, FARule{1, 'b', 1}, FARule{1, 'b', 2},
+         FARule{2, 'a', 3}, FARule{2, 'b', 3},
+         FARule{3, 'a', 4}, FARule{3, 'b', 4},
       },
    }
-   dfa_design := DFADesign{1, []int{3}, rulebook}
-   fmt.Println(dfa_design.does_accept("a"))
-   fmt.Println(dfa_design.does_accept("baa"))
-   fmt.Println(dfa_design.does_accept("baba"))
+   fmt.Println(rulebook.next_states(States{1}, 'b'))
+   fmt.Println(rulebook.next_states(States{1,2}, 'a'))
+   fmt.Println(rulebook.next_states(States{1,3}, 'b'))
 }
 
 // vim: foldmethod=marker
