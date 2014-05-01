@@ -67,6 +67,27 @@ func (s NFARuleBook) rules_for(state int, character byte) []FARule {
 
 // }}}
 
+
+type NFA struct { // {{{
+   current_states States
+   accept_states States
+   rulebook NFARuleBook
+}
+
+func (s NFA) is_accepting() bool {
+   for i := 0; i < len(s.current_states); i++ {
+      for j := 0; j < len(s.accept_states); j++ {
+         if s.current_states[i] == s.accept_states[j] {
+            return true
+         }
+      }
+   }
+
+   return false
+}
+
+// }}}
+
 func main() {
    rulebook := NFARuleBook{
       []FARule{
@@ -75,9 +96,8 @@ func main() {
          FARule{3, 'a', 4}, FARule{3, 'b', 4},
       },
    }
-   fmt.Println(rulebook.next_states(States{1}, 'b'))
-   fmt.Println(rulebook.next_states(States{1,2}, 'a'))
-   fmt.Println(rulebook.next_states(States{1,3}, 'b'))
+   fmt.Println(NFA{States{1}, States{4}, rulebook}.is_accepting())
+   fmt.Println(NFA{States{1,2,4}, States{4}, rulebook}.is_accepting())
 }
 
 // vim: foldmethod=marker
