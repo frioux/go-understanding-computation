@@ -1,224 +1,65 @@
 package main
 
-import (
-   "fmt"
-)
-
-type Env map[string]Expr
-
-// type Stmt interface {
-//    is_stmt()
-//    evaluate(Env) Env
-// }
+import "fmt"
 
 type Expr interface {
    is_expr()
    asGo() string
 }
 
-type Boolean struct { // {{{
-   boolean bool
+type FARule struct { // {{{
+   state int
+   character rune
+   next_state int
 }
 
-func (s Boolean) is_expr() { }
-
-func (s Boolean) asGo() string {
-   return fmt.Sprintf("func(Env) bool { return %t }", s.boolean)
+func (s FARule) does_apply_to(state int, character rune) bool {
+   return s.state == state && s.character == character
 }
 
-// }}}
-
-type Number struct { // {{{
-   num int
+func (s FARule) follow() int {
+   return s.next_state
 }
 
-func (s Number) is_expr() { }
-
-func (s Number) asGo() string {
-   return fmt.Sprintf("func(Env) int { return %d }", s.num)
-}
-
-// }}}
-
-type Add struct { // {{{
-   Left Expr
-   Right Expr
-}
-
-func (s Add) is_expr() { }
-
-func (s Add) asGo() string {
+func (s FARule) String() string {
    return fmt.Sprintf(
-      "func(e Env) int { return %s(e) + %s(e) }",
-      s.Left.asGo(), s.Right.asGo(),
+      "#<FARule %s -- %c--> %s",
+      s.state, s.character, s.next_state,
    )
 }
 
 // }}}
 
-type Multiply struct { // {{{
-   Left Expr
-   Right Expr
+type DFARuleBook struct { // {{{
+   rules []FARule
 }
 
-func (s Multiply) is_expr() { }
-
-func (s Multiply) asGo() string {
-   return fmt.Sprintf(
-      "func(e Env) int { return %s(e) * %s(e) }",
-      s.Left.asGo(), s.Right.asGo(),
-   )
+func (s DFARuleBook) next_state(state int, character rune) int {
+   return s.rule_for(state, character).follow()
 }
 
-// }}}
-
-type LessThan struct { // {{{
-   Left Expr
-   Right Expr
-}
-
-func (s LessThan) is_expr() { }
-
-func (s LessThan) asGo() string {
-   return fmt.Sprintf(
-      "func(e Env) bool { return %s(e) < %s(e) }",
-      s.Left.asGo(), s.Right.asGo(),
-   )
+func (s DFARuleBook) rule_for(state int, character rune) FARule {
+   for i := 0; i < len(s.rules); i++ {
+      if s.rules[i].does_apply_to(state, character) {
+         return s.rules[i]
+      }
+   }
+   return FARule{1, '💀', 1}
 }
 
 // }}}
-
-type Variable struct { // {{{
-   name string
-}
-
-func (s Variable) is_expr() { }
-
-func (s Variable) asGo() string {
-   return fmt.Sprintf(
-      "func(e Env) string { return e[\"%s\"] }",
-      s.name,
-   )
-}
-
-// }}}
-
-// type DoNothing struct { // {{{
-// }
-
-// func (s DoNothing) is_stmt() { }
-
-// func (s DoNothing) String() string {
-//    return "do-nothing"
-// }
-
-// func (s DoNothing) evaluate(e Env) Env {
-//    return e
-// }
-
-// // }}}
-
-// type Assign struct { // {{{
-//    name string
-//    expression Expr
-// }
-
-// func (s Assign) is_stmt() { }
-
-// func (s Assign) String() string {
-//    return fmt.Sprintf("%s = %s", s.name, s.expression)
-// }
-
-// func (s Assign) evaluate(e Env) Env {
-//    var new_env Env = Env{}
-//    for k, v := range e {
-//        new_env[k] = v
-//    }
-//    new_env[s.name] = s.expression.evaluate(new_env)
-//    return new_env
-// }
-
-// // }}}
-
-// type If struct { // {{{
-//    expression Expr
-//    consequence Stmt
-//    alternative Stmt
-// }
-
-// func (s If) is_stmt() { }
-
-// func (s If) String() string {
-//    return fmt.Sprintf(
-//       "if (%s) { %s } else { %s }",
-//       s.expression, s.consequence, s.alternative,
-//    )
-// }
-
-// func (s If) evaluate(e Env) Env {
-//    if s.expression.asBool(e) {
-//       return s.consequence.evaluate(e)
-//    } else {
-//       return s.alternative.evaluate(e)
-//    }
-// }
-
-// // }}}
-
-// type Sequence struct { // {{{
-//    left Stmt
-//    right Stmt
-// }
-
-// func (s Sequence) is_stmt() { }
-
-// func (s Sequence) String() string {
-//    return fmt.Sprintf(
-//       "%s; %s",
-//       s.left, s.right,
-//    )
-// }
-
-// func (s Sequence) evaluate(e Env) Env {
-//    return s.right.evaluate(s.left.evaluate(e))
-// }
-
-// // }}}
-
-// type While struct { // {{{
-//    expression Expr
-//    statement Stmt
-// }
-
-// func (s While) is_stmt() { }
-
-// func (s While) String() string {
-//    return fmt.Sprintf(
-//       "while (%s) { %s }",
-//       s.expression, s.statement,
-//    )
-// }
-
-// func (s While) evaluate(e Env) Env {
-//    var newEnv Env = e
-//    for s.expression.asBool(newEnv) {
-//       newEnv = s.statement.evaluate(newEnv)
-//    }
-//    return newEnv
-// }
-
-// // }}}
 
 func main() {
-   fmt.Println(
-      "package main\n",
-      "import (\"fmt\")\n",
-      "type Env map[string]string\n",
-      "func main() {\n",
-      "f := ", LessThan{Number{2}, Number{3}}.asGo(), "\n",
-      "fmt.Println(f(Env{}))\n",
-      "}\n",
-   )
+   rulebook := DFARuleBook{
+      []FARule{
+         FARule{1, 'a', 2}, FARule{1, 'b', 1},
+         FARule{2, 'a', 2}, FARule{2, 'b', 3},
+         FARule{3, 'a', 3}, FARule{3, 'b', 3},
+      },
+   }
+   fmt.Println(rulebook.next_state(1, 'a'))
+   fmt.Println(rulebook.next_state(1, 'b'))
+   fmt.Println(rulebook.next_state(2, 'b'))
 }
 
 // vim: foldmethod=marker
