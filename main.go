@@ -98,6 +98,24 @@ func (s *NFA) read_string(str string) {
 
 // }}}
 
+type NFADesign struct { // {{{
+   start_state int
+   accept_states States
+   rulebook NFARuleBook
+}
+
+func (s NFADesign) does_accept(str string) bool {
+   nfa := s.to_nfa()
+   nfa.read_string(str)
+   return nfa.is_accepting()
+}
+
+func (s NFADesign) to_nfa() NFA {
+   return NFA{States{s.start_state}, s.accept_states, s.rulebook}
+}
+
+// }}}
+
 func main() {
    rulebook := NFARuleBook{
       []FARule{
@@ -106,18 +124,10 @@ func main() {
          FARule{3, 'a', 4}, FARule{3, 'b', 4},
       },
    }
-   nfa := NFA{States{1}, States{4}, rulebook}
-   nfa.read_character('b');
-   fmt.Println(nfa.is_accepting())
-   nfa.read_character('a');
-   fmt.Println(nfa.is_accepting())
-   nfa.read_character('b');
-   fmt.Println(nfa.is_accepting())
-
-   nfa = NFA{States{1}, States{4}, rulebook}
-   fmt.Println(nfa.is_accepting())
-   nfa.read_string("bbbbb");
-   fmt.Println(nfa.is_accepting())
+   nfa_design := NFADesign{1, States{4}, rulebook}
+   fmt.Println(nfa_design.does_accept("bab"))
+   fmt.Println(nfa_design.does_accept("bbbbb"))
+   fmt.Println(nfa_design.does_accept("bbabb"))
 }
 
 // vim: foldmethod=marker
