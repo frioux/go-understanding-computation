@@ -355,12 +355,20 @@ func (s Repeat) to_nfa_design() NFADesign {
 // }}}
 
 func main() {
-   pattern := Repeat{Literal{'a'}}
+   pattern := Repeat{
+      Concatenate{
+         Literal{'a'},
+         Choose{Empty{}, Literal{'b'}},
+      },
+   }
    fmt.Println(pattern)
    fmt.Println(matches(pattern, ""))
    fmt.Println(matches(pattern, "a"))
-   fmt.Println(matches(pattern, "aaaa"))
-   fmt.Println(matches(pattern, "b"))
+   fmt.Println(matches(pattern, "ab"))
+   fmt.Println(matches(pattern, "aba"))
+   fmt.Println(matches(pattern, "abab"))
+   fmt.Println(matches(pattern, "abaab"))
+   fmt.Println(matches(pattern, "abba"))
 }
 
 // vim: foldmethod=marker
