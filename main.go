@@ -125,9 +125,10 @@ func (s NFA) CurrentStates() States {
 }
 
 func (s NFA) is_accepting() bool {
-   for i := 0; i < len(s.CurrentStates()); i++ {
+   curr := s.CurrentStates()
+   for i := 0; i < len(curr); i++ {
       for j := 0; j < len(s.accept_states); j++ {
-         if s.current_states[i] == s.accept_states[j] {
+         if curr[i] == s.accept_states[j] {
             return true
          }
       }
