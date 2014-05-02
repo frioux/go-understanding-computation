@@ -330,13 +330,37 @@ func (s Repeat) String() string {
    return bracket(s.pattern, s.precedence()) + "*"
 }
 
+func (s Repeat) to_nfa_design() NFADesign {
+   nfa := s.pattern.to_nfa_design()
+   accept_states := nfa.accept_states
+   rules := nfa.rulebook.rules
+
+   // generate accepting start state
+   start_state := unique_int
+   unique_int++
+   accept_states = append(accept_states, start_state)
+   rules = append(rules, FARule{start_state, 0, nfa.start_state})
+
+   // generate free moves
+   for i := 0; i < len(nfa.accept_states); i++ {
+      rules = append(
+         rules,
+         FARule{nfa.accept_states[i], 0, nfa.start_state},
+      )
+   }
+
+   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+}
+
 // }}}
 
 func main() {
-   pattern := Choose{Literal{'a'}, Literal{'b'}}
+   pattern := Repeat{Literal{'a'}}
+   fmt.Println(pattern)
+   fmt.Println(matches(pattern, ""))
    fmt.Println(matches(pattern, "a"))
+   fmt.Println(matches(pattern, "aaaa"))
    fmt.Println(matches(pattern, "b"))
-   fmt.Println(matches(pattern, "c"))
 }
 
 // vim: foldmethod=marker
