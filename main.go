@@ -167,8 +167,17 @@ func (s NFADesign) to_nfa() NFA {
 // }}}
 
 type Pattern interface {
-   bracket(int) string
    to_nfa_design() NFADesign
+   precedence() int
+   String() string
+}
+
+func bracket(s Pattern, precedence int) string {
+   if s.precedence() < precedence {
+      return "(" + s.String() + ")"
+   } else {
+      return s.String()
+   }
 }
 
 type Empty struct { // {{{
@@ -176,14 +185,6 @@ type Empty struct { // {{{
 
 func (s Empty) precedence() int {
    return 3
-}
-
-func (s Empty) bracket(outer_precedence int) string {
-   if s.precedence() < outer_precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
 }
 
 func (s Empty) String() string {
@@ -207,14 +208,6 @@ type Literal struct { // {{{
 
 func (s Literal) precedence() int {
    return 3
-}
-
-func (s Literal) bracket(outer_precedence int) string {
-   if s.precedence() < outer_precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
 }
 
 func (s Literal) String() string {
@@ -244,17 +237,9 @@ func (s Concatenate) precedence() int {
    return 1
 }
 
-func (s Concatenate) bracket(outer_precedence int) string {
-   if s.precedence() < outer_precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
-}
-
 func (s Concatenate) String() string {
-   return s.first.bracket(s.precedence()) +
-      s.second.bracket(s.precedence())
+   return bracket(s.first, s.precedence()) +
+      bracket(s.second, s.precedence())
 }
 
 // }}}
@@ -268,17 +253,9 @@ func (s Choose) precedence() int {
    return 0
 }
 
-func (s Choose) bracket(outer_precedence int) string {
-   if s.precedence() < outer_precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
-}
-
 func (s Choose) String() string {
-   return s.first.bracket(s.precedence()) + "|" +
-      s.second.bracket(s.precedence())
+   return bracket(s.first, s.precedence()) + "|" +
+      bracket(s.second, s.precedence())
 }
 
 // }}}
@@ -291,16 +268,8 @@ func (s Repeat) precedence() int {
    return 2
 }
 
-func (s Repeat) bracket(outer_precedence int) string {
-   if s.precedence() < outer_precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
-}
-
 func (s Repeat) String() string {
-   return s.pattern.bracket(s.precedence()) + "*"
+   return bracket(s.pattern, s.precedence()) + "*"
 }
 
 // }}}
