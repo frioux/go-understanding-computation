@@ -166,7 +166,7 @@ func (s NFADesign) to_nfa() NFA {
 
 // }}}
 
-type Pattern interface {
+type Pattern interface { // {{{
    to_nfa_design() NFADesign
    precedence() int
    String() string
@@ -179,6 +179,12 @@ func bracket(s Pattern, precedence int) string {
       return s.String()
    }
 }
+
+func matches(s Pattern, str string) bool {
+   return s.to_nfa_design().does_accept(str)
+}
+
+// }}}
 
 type Empty struct { // {{{
 }
@@ -275,14 +281,8 @@ func (s Repeat) String() string {
 // }}}
 
 func main() {
-   nfa_design := Empty{}.to_nfa_design()
-   fmt.Println(nfa_design.does_accept(""))
-   fmt.Println(nfa_design.does_accept("a"))
-
-   nfa_design = Literal{'a'}.to_nfa_design()
-   fmt.Println(nfa_design.does_accept(""))
-   fmt.Println(nfa_design.does_accept("a"))
-   fmt.Println(nfa_design.does_accept("b"))
+   fmt.Println(matches(Empty{}, "a"))
+   fmt.Println(matches(Literal{'a'}, "a"))
 }
 
 // vim: foldmethod=marker
