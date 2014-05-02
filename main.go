@@ -25,7 +25,42 @@ func (s FARule) String() string {
 
 // }}}
 
-type States []int
+type States []int // {{{
+
+func (s States) is_subset_of(other States) bool {
+   self_set := make(map[int]bool)
+   other_set := make(map[int]bool)
+   for i := 0; i < len(s); i++ {
+      self_set[s[i]] = true
+   }
+   for i := 0; i < len(other); i++ {
+      other_set[other[i]] = true
+   }
+   for k := range self_set {
+      _, ok := other_set[k]
+      if !ok {
+         return false
+      }
+   }
+   return true
+}
+
+func (s States) union(other States) States {
+   set := make(map[int]bool)
+   for i := 0; i < len(s); i++ {
+      set[s[i]] = true
+   }
+   for i := 0; i < len(other); i++ {
+      set[other[i]] = true
+   }
+   ret := States{}
+   for k := range set {
+      ret = append(ret, k)
+   }
+   return ret
+}
+
+// }}}
 
 type NFARuleBook struct { // {{{
    rules []FARule
@@ -65,8 +100,17 @@ func (s NFARuleBook) rules_for(state int, character byte) []FARule {
    return ret
 }
 
-// }}}
+func (s NFARuleBook) follow_free_moves(states States) States {
+   more_states := s.next_states(states, 0)
 
+   if more_states.is_subset_of(states) {
+      return states
+   } else {
+      return s.follow_free_moves(states.union(more_states))
+   }
+}
+
+// }}}
 
 type NFA struct { // {{{
    current_states States
@@ -74,8 +118,12 @@ type NFA struct { // {{{
    rulebook NFARuleBook
 }
 
+func (s NFA) CurrentStates() States {
+   return s.rulebook.follow_free_moves(s.current_states)
+}
+
 func (s NFA) is_accepting() bool {
-   for i := 0; i < len(s.current_states); i++ {
+   for i := 0; i < len(s.CurrentStates()); i++ {
       for j := 0; j < len(s.accept_states); j++ {
          if s.current_states[i] == s.accept_states[j] {
             return true
@@ -87,7 +135,7 @@ func (s NFA) is_accepting() bool {
 }
 
 func (s *NFA) read_character(character byte) {
-   s.current_states = s.rulebook.next_states(s.current_states, character)
+   s.current_states = s.rulebook.next_states(s.CurrentStates(), character)
 }
 
 func (s *NFA) read_string(str string) {
@@ -119,15 +167,19 @@ func (s NFADesign) to_nfa() NFA {
 func main() {
    rulebook := NFARuleBook{
       []FARule{
-         FARule{1, 'a', 1}, FARule{1, 'b', 1}, FARule{1, 'b', 2},
-         FARule{2, 'a', 3}, FARule{2, 'b', 3},
-         FARule{3, 'a', 4}, FARule{3, 'b', 4},
+         FARule{1,  0 , 2}, FARule{1, 0, 4},
+         FARule{2, 'a', 3},
+         FARule{3, 'a', 2},
+         FARule{4, 'a', 5},
+         FARule{5, 'a', 6},
+         FARule{6, 'a', 4},
       },
    }
-   nfa_design := NFADesign{1, States{4}, rulebook}
-   fmt.Println(nfa_design.does_accept("bab"))
-   fmt.Println(nfa_design.does_accept("bbbbb"))
-   fmt.Println(nfa_design.does_accept("bbabb"))
+   nfa_design := NFADesign{1, States{2,4}, rulebook}
+   fmt.Println(nfa_design.does_accept("aa"))
+   fmt.Println(nfa_design.does_accept("aaa"))
+   fmt.Println(nfa_design.does_accept("aaaaa"))
+   fmt.Println(nfa_design.does_accept("aaaaaa"))
 }
 
 // vim: foldmethod=marker
