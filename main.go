@@ -249,6 +249,26 @@ func (s Concatenate) String() string {
       bracket(s.second, s.precedence())
 }
 
+func (s Concatenate) to_nfa_design() NFADesign {
+   first_nfa := s.first.to_nfa_design()
+   second_nfa := s.second.to_nfa_design()
+
+   start_state := first_nfa.start_state
+   accept_states := second_nfa.accept_states
+   rules := first_nfa.rulebook.rules
+   for i := 0; i < len(second_nfa.rulebook.rules); i++ {
+      rules = append(rules, second_nfa.rulebook.rules[i])
+   }
+   for i := 0; i < len(first_nfa.accept_states); i++ {
+      rules = append(
+         rules,
+         FARule{first_nfa.accept_states[i], 0, second_nfa.start_state},
+      )
+   }
+
+   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+}
+
 // }}}
 
 type Choose struct { // {{{
@@ -282,8 +302,15 @@ func (s Repeat) String() string {
 // }}}
 
 func main() {
-   fmt.Println(matches(Empty{}, "a"))
-   fmt.Println(matches(Literal{'a'}, "a"))
+   pattern := Concatenate{Literal{'a'}, Literal{'b'}}
+   fmt.Println(matches(pattern, "a"))
+   fmt.Println(matches(pattern, "ab"))
+   fmt.Println(matches(pattern, "abc"))
+
+   pattern = Concatenate{Literal{'a'}, Concatenate{Literal{'b'}, Literal{'c'}}}
+   fmt.Println(matches(pattern, "a"))
+   fmt.Println(matches(pattern, "ab"))
+   fmt.Println(matches(pattern, "abc"))
 }
 
 // vim: foldmethod=marker
