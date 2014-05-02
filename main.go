@@ -285,6 +285,37 @@ func (s Choose) String() string {
       bracket(s.second, s.precedence())
 }
 
+func (s Choose) to_nfa_design() NFADesign {
+   first_nfa := s.first.to_nfa_design()
+   second_nfa := s.second.to_nfa_design()
+
+   // merge accept states
+   accept_states := first_nfa.accept_states
+   for i := 0; i < len(second_nfa.accept_states); i++ {
+      accept_states = append(accept_states, second_nfa.accept_states[i])
+   }
+
+   // merge rules
+   rules := first_nfa.rulebook.rules
+   for i := 0; i < len(second_nfa.rulebook.rules); i++ {
+      rules = append(rules, second_nfa.rulebook.rules[i])
+   }
+
+   // generate free rules
+   var start_state int = unique_int
+   unique_int++
+   rules = append(
+      rules,
+      FARule{start_state, 0, first_nfa.start_state},
+   )
+   rules = append(
+      rules,
+      FARule{start_state, 0, second_nfa.start_state},
+   )
+
+   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+}
+
 // }}}
 
 type Repeat struct { // {{{
@@ -302,15 +333,10 @@ func (s Repeat) String() string {
 // }}}
 
 func main() {
-   pattern := Concatenate{Literal{'a'}, Literal{'b'}}
+   pattern := Choose{Literal{'a'}, Literal{'b'}}
    fmt.Println(matches(pattern, "a"))
-   fmt.Println(matches(pattern, "ab"))
-   fmt.Println(matches(pattern, "abc"))
-
-   pattern = Concatenate{Literal{'a'}, Concatenate{Literal{'b'}, Literal{'c'}}}
-   fmt.Println(matches(pattern, "a"))
-   fmt.Println(matches(pattern, "ab"))
-   fmt.Println(matches(pattern, "abc"))
+   fmt.Println(matches(pattern, "b"))
+   fmt.Println(matches(pattern, "c"))
 }
 
 // vim: foldmethod=marker
