@@ -2,36 +2,49 @@ package main
 
 import "fmt"
 
-var unique_int int = 0
-
-type FARule struct { // {{{
-   state int
-   character byte
-   next_state int
+type Statey interface { //
+   is_statey()
 }
 
-func (s FARule) does_apply_to(state int, character byte) bool {
+type State int
+func (s State) is_statey() { }
+
+func (s State) String() string {
+   return fmt.Sprintf("%d", s)
+}
+
+// }}}
+
+var unique_int State = 0
+
+type FARule struct { // {{{
+   state Statey
+   character byte
+   next_state Statey
+}
+
+func (s FARule) does_apply_to(state Statey, character byte) bool {
    return s.state == state && s.character == character
 }
 
-func (s FARule) follow() int {
+func (s FARule) follow() Statey {
    return s.next_state
 }
 
 func (s FARule) String() string {
    return fmt.Sprintf(
-      "#<FARule %s -- %c--> %s",
+      "#<FARule %s --%c--> %s",
       s.state, s.character, s.next_state,
    )
 }
 
 // }}}
 
-type States []int // {{{
+type States []Statey // {{{
 
 func (s States) is_subset_of(other States) bool {
-   self_set := make(map[int]bool)
-   other_set := make(map[int]bool)
+   self_set := make(map[Statey]bool)
+   other_set := make(map[Statey]bool)
    for i := 0; i < len(s); i++ {
       self_set[s[i]] = true
    }
@@ -48,7 +61,7 @@ func (s States) is_subset_of(other States) bool {
 }
 
 func (s States) union(other States) States {
-   set := make(map[int]bool)
+   set := make(map[Statey]bool)
    for i := 0; i < len(s); i++ {
       set[s[i]] = true
    }
@@ -69,7 +82,7 @@ type NFARuleBook struct { // {{{
 }
 
 func (s NFARuleBook) next_states(states States, character byte) States {
-   set := make(map[int]bool)
+   set := make(map[Statey]bool)
    for x := 0; x < len(states); x++ {
       inner_states := s.follow_rules_for(states[x], character)
       for y := 0; y < len(inner_states); y++ {
@@ -83,7 +96,7 @@ func (s NFARuleBook) next_states(states States, character byte) States {
    return ret
 }
 
-func (s NFARuleBook) follow_rules_for(state int, character byte) States {
+func (s NFARuleBook) follow_rules_for(state Statey, character byte) States {
    states := s.rules_for(state, character)
    ret := States{}
    for x := 0; x < len(states); x++ {
@@ -92,7 +105,7 @@ func (s NFARuleBook) follow_rules_for(state int, character byte) States {
    return ret
 }
 
-func (s NFARuleBook) rules_for(state int, character byte) []FARule {
+func (s NFARuleBook) rules_for(state Statey, character byte) []FARule {
    ret := []FARule{}
    for x := 0; x < len(s.rules); x++ {
       if s.rules[x].does_apply_to(state, character) {
@@ -110,6 +123,21 @@ func (s NFARuleBook) follow_free_moves(states States) States {
    } else {
       return s.follow_free_moves(states.union(more_states))
    }
+}
+
+func (s NFARuleBook) alphabet() []byte {
+   chars := make(map[byte]struct{})
+   for i := 0; i < len(s.rules); i++ {
+      char := s.rules[i].character
+      if char != 0 {
+         chars[char] = struct{}{}
+      }
+   }
+   ret := []byte{}
+   for k := range chars {
+      ret = append(ret, k)
+   }
+   return ret
 }
 
 // }}}
@@ -150,7 +178,7 @@ func (s *NFA) read_string(str string) {
 // }}}
 
 type NFADesign struct { // {{{
-   start_state int
+   start_state Statey
    accept_states States
    rulebook NFARuleBook
 }
@@ -180,6 +208,14 @@ func (s NFASimulation) next_state(states States, character byte) States {
    nfa.read_character(character)
    return nfa.CurrentStates()
 }
+
+// func (s NFASimulation) rules_for(states States) []FARule {
+//    az := s.nfa_design.rulebook.alphabet()
+//    ret := []FARule{}
+//    for i := 0; i < len(az); i++ {
+//       ret = append(ret, FARule{
+//    }
+// }
 
 // }}}
 
@@ -215,9 +251,9 @@ func (s Empty) String() string {
 }
 
 func (s Empty) to_nfa_design() NFADesign {
-   var start_state int = unique_int
+   var start_state Statey = unique_int
    unique_int++
-   accept_states := []int{start_state}
+   accept_states := []Statey{start_state}
    rulebook := NFARuleBook{}
 
    return NFADesign{start_state, accept_states, rulebook}
@@ -238,7 +274,7 @@ func (s Literal) String() string {
 }
 
 func (s Literal) to_nfa_design() NFADesign {
-   var start_state int = unique_int
+   var start_state Statey = unique_int
    unique_int++
    accept_states := unique_int
    unique_int++
@@ -318,7 +354,7 @@ func (s Choose) to_nfa_design() NFADesign {
    }
 
    // generate free rules
-   var start_state int = unique_int
+   var start_state Statey = unique_int
    unique_int++
    rules = append(
       rules,
@@ -373,19 +409,16 @@ func (s Repeat) to_nfa_design() NFADesign {
 func main() {
    rulebook := NFARuleBook{
       []FARule{
-         FARule{1, 'a', 1}, FARule{1, 'a', 2}, FARule{1, 0, 2},
-         FARule{2, 'b', 3},
-         FARule{3, 'b', 1}, FARule{3, 0, 2},
+         FARule{State(1), 'a', State(1)}, FARule{State(1), 'a', State(2)}, FARule{State(1), 0, State(2)},
+         FARule{State(2), 'b', State(3)},
+         FARule{State(3), 'b', State(1)}, FARule{State(3), 0, State(2)},
       },
    }
-   nfa_design := NFADesign{1, States{3}, rulebook}
-   simulation := NFASimulation{nfa_design}
+   // nfa_design := NFADesign{1, States{3}, rulebook}
+   // simulation := NFASimulation{nfa_design}
 
-   fmt.Println(simulation.next_state(States{1, 2}, 'a'))
-   fmt.Println(simulation.next_state(States{1, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{3, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{1, 3, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{1, 3, 2}, 'a'))
+   fmt.Println(rulebook.alphabet())
+   fmt.Println(FARule{State(1), 'a', State(2)})
 }
 
 // vim: foldmethod=marker
