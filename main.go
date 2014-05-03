@@ -367,9 +367,9 @@ func main() {
       },
    }
    nfa_design := NFADesign{1, States{3}, rulebook}
-   fmt.Println(nfa_design.to_nfa_default().CurrentStates())
-   fmt.Println(nfa_design.to_nfa(States{2}).CurrentStates())
-   fmt.Println(nfa_design.to_nfa(States{3}).CurrentStates())
+   nfa := nfa_design.to_nfa(States{2, 3})
+   nfa.read_character('b')
+   fmt.Println(nfa.CurrentStates())
 }
 
 // vim: foldmethod=marker
