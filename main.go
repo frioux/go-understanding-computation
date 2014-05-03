@@ -171,6 +171,18 @@ func (s NFADesign) to_nfa(start States) NFA {
 
 // }}}
 
+type NFASimulation struct { // {{{
+   nfa_design NFADesign
+}
+
+func (s NFASimulation) next_state(states States, character byte) States {
+   nfa := s.nfa_design.to_nfa(states)
+   nfa.read_character(character)
+   return nfa.CurrentStates()
+}
+
+// }}}
+
 type Pattern interface { // {{{
    to_nfa_design() NFADesign
    precedence() int
@@ -367,9 +379,13 @@ func main() {
       },
    }
    nfa_design := NFADesign{1, States{3}, rulebook}
-   nfa := nfa_design.to_nfa(States{2, 3})
-   nfa.read_character('b')
-   fmt.Println(nfa.CurrentStates())
+   simulation := NFASimulation{nfa_design}
+
+   fmt.Println(simulation.next_state(States{1, 2}, 'a'))
+   fmt.Println(simulation.next_state(States{1, 2}, 'b'))
+   fmt.Println(simulation.next_state(States{3, 2}, 'b'))
+   fmt.Println(simulation.next_state(States{1, 3, 2}, 'b'))
+   fmt.Println(simulation.next_state(States{1, 3, 2}, 'a'))
 }
 
 // vim: foldmethod=marker
