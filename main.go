@@ -41,6 +41,7 @@ func (s FARule) String() string {
 // }}}
 
 type States []Statey // {{{
+func (s States) is_statey() {}
 
 func (s States) is_subset_of(other States) bool {
    self_set := make(map[Statey]bool)
@@ -193,8 +194,8 @@ func (s NFADesign) to_nfa_default() NFA {
    return s.to_nfa(States{s.start_state})
 }
 
-func (s NFADesign) to_nfa(start States) NFA {
-   return NFA{start, s.accept_states, s.rulebook}
+func (s NFADesign) to_nfa(start Statey) NFA {
+   return NFA{start.(States), s.accept_states, s.rulebook}
 }
 
 // }}}
@@ -203,19 +204,21 @@ type NFASimulation struct { // {{{
    nfa_design NFADesign
 }
 
-func (s NFASimulation) next_state(states States, character byte) States {
-   nfa := s.nfa_design.to_nfa(states)
+func (s NFASimulation) next_state(state Statey, character byte) Statey {
+   nfa := s.nfa_design.to_nfa(state)
    nfa.read_character(character)
    return nfa.CurrentStates()
 }
 
-// func (s NFASimulation) rules_for(states States) []FARule {
-//    az := s.nfa_design.rulebook.alphabet()
-//    ret := []FARule{}
-//    for i := 0; i < len(az); i++ {
-//       ret = append(ret, FARule{
-//    }
-// }
+func (s NFASimulation) rules_for(state Statey) []FARule {
+   az := s.nfa_design.rulebook.alphabet()
+   ret := []FARule{}
+   for i := 0; i < len(az); i++ {
+      ret = append(ret, FARule{state, az[i], s.next_state(state, az[i])})
+   }
+
+   return ret
+}
 
 // }}}
 
@@ -414,11 +417,12 @@ func main() {
          FARule{State(3), 'b', State(1)}, FARule{State(3), 0, State(2)},
       },
    }
-   // nfa_design := NFADesign{1, States{3}, rulebook}
-   // simulation := NFASimulation{nfa_design}
+   nfa_design := NFADesign{State(1), States{State(3)}, rulebook}
+   simulation := NFASimulation{nfa_design}
 
    fmt.Println(rulebook.alphabet())
-   fmt.Println(FARule{State(1), 'a', State(2)})
+   fmt.Println(simulation.rules_for(States{State(1), State(2)}))
+   fmt.Println(simulation.rules_for(States{State(3), State(2)}))
 }
 
 // vim: foldmethod=marker
