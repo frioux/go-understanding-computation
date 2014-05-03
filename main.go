@@ -156,13 +156,17 @@ type NFADesign struct { // {{{
 }
 
 func (s NFADesign) does_accept(str string) bool {
-   nfa := s.to_nfa()
+   nfa := s.to_nfa_default()
    nfa.read_string(str)
    return nfa.is_accepting()
 }
 
-func (s NFADesign) to_nfa() NFA {
-   return NFA{States{s.start_state}, s.accept_states, s.rulebook}
+func (s NFADesign) to_nfa_default() NFA {
+   return s.to_nfa(States{s.start_state})
+}
+
+func (s NFADesign) to_nfa(start States) NFA {
+   return NFA{start, s.accept_states, s.rulebook}
 }
 
 // }}}
@@ -355,20 +359,17 @@ func (s Repeat) to_nfa_design() NFADesign {
 // }}}
 
 func main() {
-   pattern := Repeat{
-      Concatenate{
-         Literal{'a'},
-         Choose{Empty{}, Literal{'b'}},
+   rulebook := NFARuleBook{
+      []FARule{
+         FARule{1, 'a', 1}, FARule{1, 'a', 2}, FARule{1, 0, 2},
+         FARule{2, 'b', 3},
+         FARule{3, 'b', 1}, FARule{3, 0, 2},
       },
    }
-   fmt.Println(pattern)
-   fmt.Println(matches(pattern, ""))
-   fmt.Println(matches(pattern, "a"))
-   fmt.Println(matches(pattern, "ab"))
-   fmt.Println(matches(pattern, "aba"))
-   fmt.Println(matches(pattern, "abab"))
-   fmt.Println(matches(pattern, "abaab"))
-   fmt.Println(matches(pattern, "abba"))
+   nfa_design := NFADesign{1, States{3}, rulebook}
+   fmt.Println(nfa_design.to_nfa_default().CurrentStates())
+   fmt.Println(nfa_design.to_nfa(States{2}).CurrentStates())
+   fmt.Println(nfa_design.to_nfa(States{3}).CurrentStates())
 }
 
 // vim: foldmethod=marker
