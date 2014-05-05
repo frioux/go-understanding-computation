@@ -61,6 +61,39 @@ func (s States) is_subset_of(other States) bool {
    return true
 }
 
+func union(s, other []Statey) []Statey {
+   set := make(map[Statey]bool)
+   for i := 0; i < len(s); i++ {
+      set[s[i]] = true
+   }
+   for i := 0; i < len(other); i++ {
+      set[other[i]] = true
+   }
+   ret := States{}
+   for k := range set {
+      ret = append(ret, k)
+   }
+   return ret
+}
+
+func is_subset_of(s, other []Statey) bool {
+   self_set := make(map[Statey]bool)
+   other_set := make(map[Statey]bool)
+   for i := 0; i < len(s); i++ {
+      self_set[s[i]] = true
+   }
+   for i := 0; i < len(other); i++ {
+      other_set[other[i]] = true
+   }
+   for k := range self_set {
+      _, ok := other_set[k]
+      if !ok {
+         return false
+      }
+   }
+   return true
+}
+
 func (s States) union(other States) States {
    set := make(map[Statey]bool)
    for i := 0; i < len(s); i++ {
@@ -218,6 +251,35 @@ func (s NFASimulation) rules_for(state Statey) []FARule {
    }
 
    return ret
+}
+
+func (s NFASimulation) discover_states_and_rules(states States) (States, []FARule) {
+
+   // map s.rules_for($_), states
+   rules := []FARule{}
+   for i := 0; i < len(states); i++ {
+      to_append := s.rules_for(states[i])
+      for j := 0; j < len(to_append); j++ {
+         rules = append(rules, to_append[j])
+      }
+   }
+
+   // uniq, map $_.follow(), rules
+   more_states_map := make(map[Statey]struct{})
+   for i := 0; i < len(rules); i++ {
+      more_states_map[rules[i].follow()] = struct{}{}
+   }
+   more_states := []Statey{}
+   for k := range more_states_map {
+      more_states = append(more_states, k)
+   }
+
+   if is_subset_of(more_states, states) {
+      return states, rules
+   } else {
+      return s.discover_states_and_rules(union(states, more_states))
+   }
+
 }
 
 // }}}
@@ -418,11 +480,10 @@ func main() {
       },
    }
    nfa_design := NFADesign{State(1), States{State(3)}, rulebook}
-   simulation := NFASimulation{nfa_design}
+   // simulation := NFASimulation{nfa_design}
 
-   fmt.Println(rulebook.alphabet())
-   fmt.Println(simulation.rules_for(States{State(1), State(2)}))
-   fmt.Println(simulation.rules_for(States{State(3), State(2)}))
+   start_state := nfa_design.to_nfa_default().CurrentStates()
+   fmt.Println(start_state)
 }
 
 // vim: foldmethod=marker
