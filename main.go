@@ -370,6 +370,24 @@ func (s Repeat) to_nfa_design() NFADesign {
 
 // }}}
 
+type Stack []byte // {{{
+
+func (s *Stack) push(a byte) {
+   *s = append(*s, a)
+}
+
+func (s *Stack) pop() byte {
+   end := len(*s) - 1;
+   ret := (*s)[end]
+   *s = (*s)[:end]
+   return ret
+}
+
+func (s Stack) peek() byte {
+   return s[len(s)-1]
+}
+// }}}
+
 func main() {
    rulebook := NFARuleBook{
       []FARule{
@@ -386,6 +404,15 @@ func main() {
    fmt.Println(simulation.next_state(States{3, 2}, 'b'))
    fmt.Println(simulation.next_state(States{1, 3, 2}, 'b'))
    fmt.Println(simulation.next_state(States{1, 3, 2}, 'a'))
+
+   stack := Stack{'a', 'b', 'c', 'd', 'e'}
+   fmt.Println(stack.peek())
+   stack.pop()
+   stack.pop()
+   fmt.Println(stack.peek())
+   stack.push('x')
+   stack.push('y')
+   fmt.Println(stack.peek())
 }
 
 // vim: foldmethod=marker
