@@ -3,53 +3,16 @@ package main
 import (
    "fmt"
    "github.com/frioux/go-understanding-computation/stack"
-   "github.com/frioux/go-understanding-computation/automata"
+   a "github.com/frioux/go-understanding-computation/automata"
 )
 
 var unique_int int = 0
 
-type States []int // {{{
-
-func (s States) is_subset_of(other States) bool {
-   self_set := make(map[int]bool)
-   other_set := make(map[int]bool)
-   for i := 0; i < len(s); i++ {
-      self_set[s[i]] = true
-   }
-   for i := 0; i < len(other); i++ {
-      other_set[other[i]] = true
-   }
-   for k := range self_set {
-      _, ok := other_set[k]
-      if !ok {
-         return false
-      }
-   }
-   return true
-}
-
-func (s States) union(other States) States {
-   set := make(map[int]bool)
-   for i := 0; i < len(s); i++ {
-      set[s[i]] = true
-   }
-   for i := 0; i < len(other); i++ {
-      set[other[i]] = true
-   }
-   ret := States{}
-   for k := range set {
-      ret = append(ret, k)
-   }
-   return ret
-}
-
-// }}}
-
 type NFARuleBook struct { // {{{
-   rules []automata.FARule
+   rules []a.FARule
 }
 
-func (s NFARuleBook) next_states(states States, character byte) States {
+func (s NFARuleBook) next_states(states a.States, character byte) a.States {
    set := make(map[int]bool)
    for x := 0; x < len(states); x++ {
       inner_states := s.follow_rules_for(states[x], character)
@@ -57,24 +20,24 @@ func (s NFARuleBook) next_states(states States, character byte) States {
          set[inner_states[y]] = true
       }
    }
-   ret := States{}
+   ret := a.States{}
    for k := range set {
       ret = append(ret, k)
    }
    return ret
 }
 
-func (s NFARuleBook) follow_rules_for(state int, character byte) States {
+func (s NFARuleBook) follow_rules_for(state int, character byte) a.States {
    states := s.rules_for(state, character)
-   ret := States{}
+   ret := a.States{}
    for x := 0; x < len(states); x++ {
       ret = append(ret, states[x].Follow())
    }
    return ret
 }
 
-func (s NFARuleBook) rules_for(state int, character byte) []automata.FARule {
-   ret := []automata.FARule{}
+func (s NFARuleBook) rules_for(state int, character byte) []a.FARule {
+   ret := []a.FARule{}
    for x := 0; x < len(s.rules); x++ {
       if s.rules[x].DoesApplyTo(state, character) {
          ret = append(ret, s.rules[x])
@@ -83,25 +46,25 @@ func (s NFARuleBook) rules_for(state int, character byte) []automata.FARule {
    return ret
 }
 
-func (s NFARuleBook) follow_free_moves(states States) States {
+func (s NFARuleBook) follow_free_moves(states a.States) a.States {
    more_states := s.next_states(states, 0)
 
-   if more_states.is_subset_of(states) {
+   if more_states.IsSubsetOf(states) {
       return states
    } else {
-      return s.follow_free_moves(states.union(more_states))
+      return s.follow_free_moves(states.Union(more_states))
    }
 }
 
 // }}}
 
 type NFA struct { // {{{
-   current_states States
-   accept_states States
+   current_states a.States
+   accept_states a.States
    rulebook NFARuleBook
 }
 
-func (s NFA) CurrentStates() States {
+func (s NFA) CurrentStates() a.States {
    return s.rulebook.follow_free_moves(s.current_states)
 }
 
@@ -132,7 +95,7 @@ func (s *NFA) read_string(str string) {
 
 type NFADesign struct { // {{{
    start_state int
-   accept_states States
+   accept_states a.States
    rulebook NFARuleBook
 }
 
@@ -143,10 +106,10 @@ func (s NFADesign) does_accept(str string) bool {
 }
 
 func (s NFADesign) to_nfa_default() NFA {
-   return s.to_nfa(States{s.start_state})
+   return s.to_nfa(a.States{s.start_state})
 }
 
-func (s NFADesign) to_nfa(start States) NFA {
+func (s NFADesign) to_nfa(start a.States) NFA {
    return NFA{start, s.accept_states, s.rulebook}
 }
 
@@ -156,7 +119,7 @@ type NFASimulation struct { // {{{
    nfa_design NFADesign
 }
 
-func (s NFASimulation) next_state(states States, character byte) States {
+func (s NFASimulation) next_state(states a.States, character byte) a.States {
    nfa := s.nfa_design.to_nfa(states)
    nfa.read_character(character)
    return nfa.CurrentStates()
@@ -224,10 +187,10 @@ func (s Literal) to_nfa_design() NFADesign {
    accept_states := unique_int
    unique_int++
    rulebook := NFARuleBook{
-      []automata.FARule{automata.FARule{start_state, s.character, accept_states},
+      []a.FARule{a.FARule{start_state, s.character, accept_states},
    }}
 
-   return NFADesign{start_state, States{accept_states}, rulebook}
+   return NFADesign{start_state, a.States{accept_states}, rulebook}
 }
 
 // }}}
@@ -259,7 +222,7 @@ func (s Concatenate) to_nfa_design() NFADesign {
    for i := 0; i < len(first_nfa.accept_states); i++ {
       rules = append(
          rules,
-         automata.FARule{first_nfa.accept_states[i], 0, second_nfa.start_state},
+         a.FARule{first_nfa.accept_states[i], 0, second_nfa.start_state},
       )
    }
 
@@ -303,11 +266,11 @@ func (s Choose) to_nfa_design() NFADesign {
    unique_int++
    rules = append(
       rules,
-      automata.FARule{start_state, 0, first_nfa.start_state},
+      a.FARule{start_state, 0, first_nfa.start_state},
    )
    rules = append(
       rules,
-      automata.FARule{start_state, 0, second_nfa.start_state},
+      a.FARule{start_state, 0, second_nfa.start_state},
    )
 
    return NFADesign{start_state, accept_states, NFARuleBook{rules}}
@@ -336,13 +299,13 @@ func (s Repeat) to_nfa_design() NFADesign {
    start_state := unique_int
    unique_int++
    accept_states = append(accept_states, start_state)
-   rules = append(rules, automata.FARule{start_state, 0, nfa.start_state})
+   rules = append(rules, a.FARule{start_state, 0, nfa.start_state})
 
    // generate free moves
    for i := 0; i < len(nfa.accept_states); i++ {
       rules = append(
          rules,
-         automata.FARule{nfa.accept_states[i], 0, nfa.start_state},
+         a.FARule{nfa.accept_states[i], 0, nfa.start_state},
       )
    }
 
@@ -353,20 +316,20 @@ func (s Repeat) to_nfa_design() NFADesign {
 
 func main() {
    rulebook := NFARuleBook{
-      []automata.FARule{
-         automata.FARule{1, 'a', 1}, automata.FARule{1, 'a', 2}, automata.FARule{1, 0, 2},
-         automata.FARule{2, 'b', 3},
-         automata.FARule{3, 'b', 1}, automata.FARule{3, 0, 2},
+      []a.FARule{
+         a.FARule{1, 'a', 1}, a.FARule{1, 'a', 2}, a.FARule{1, 0, 2},
+         a.FARule{2, 'b', 3},
+         a.FARule{3, 'b', 1}, a.FARule{3, 0, 2},
       },
    }
-   nfa_design := NFADesign{1, States{3}, rulebook}
+   nfa_design := NFADesign{1, a.States{3}, rulebook}
    simulation := NFASimulation{nfa_design}
 
-   fmt.Println(simulation.next_state(States{1, 2}, 'a'))
-   fmt.Println(simulation.next_state(States{1, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{3, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{1, 3, 2}, 'b'))
-   fmt.Println(simulation.next_state(States{1, 3, 2}, 'a'))
+   fmt.Println(simulation.next_state(a.States{1, 2}, 'a'))
+   fmt.Println(simulation.next_state(a.States{1, 2}, 'b'))
+   fmt.Println(simulation.next_state(a.States{3, 2}, 'b'))
+   fmt.Println(simulation.next_state(a.States{1, 3, 2}, 'b'))
+   fmt.Println(simulation.next_state(a.States{1, 3, 2}, 'a'))
 
    stack := stack.Stack{'a', 'b', 'c', 'd', 'e'}
    fmt.Println(stack.Peek())
