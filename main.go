@@ -3,32 +3,10 @@ package main
 import (
    "fmt"
    "github.com/frioux/go-understanding-computation/stack"
+   "github.com/frioux/go-understanding-computation/automata"
 )
 
 var unique_int int = 0
-
-type FARule struct { // {{{
-   state int
-   character byte
-   next_state int
-}
-
-func (s FARule) does_apply_to(state int, character byte) bool {
-   return s.state == state && s.character == character
-}
-
-func (s FARule) follow() int {
-   return s.next_state
-}
-
-func (s FARule) String() string {
-   return fmt.Sprintf(
-      "#<FARule %s -- %c--> %s",
-      s.state, s.character, s.next_state,
-   )
-}
-
-// }}}
 
 type States []int // {{{
 
@@ -68,7 +46,7 @@ func (s States) union(other States) States {
 // }}}
 
 type NFARuleBook struct { // {{{
-   rules []FARule
+   rules []automata.FARule
 }
 
 func (s NFARuleBook) next_states(states States, character byte) States {
@@ -90,15 +68,15 @@ func (s NFARuleBook) follow_rules_for(state int, character byte) States {
    states := s.rules_for(state, character)
    ret := States{}
    for x := 0; x < len(states); x++ {
-      ret = append(ret, states[x].follow())
+      ret = append(ret, states[x].Follow())
    }
    return ret
 }
 
-func (s NFARuleBook) rules_for(state int, character byte) []FARule {
-   ret := []FARule{}
+func (s NFARuleBook) rules_for(state int, character byte) []automata.FARule {
+   ret := []automata.FARule{}
    for x := 0; x < len(s.rules); x++ {
-      if s.rules[x].does_apply_to(state, character) {
+      if s.rules[x].DoesApplyTo(state, character) {
          ret = append(ret, s.rules[x])
       }
    }
@@ -246,7 +224,7 @@ func (s Literal) to_nfa_design() NFADesign {
    accept_states := unique_int
    unique_int++
    rulebook := NFARuleBook{
-      []FARule{FARule{start_state, s.character, accept_states},
+      []automata.FARule{automata.FARule{start_state, s.character, accept_states},
    }}
 
    return NFADesign{start_state, States{accept_states}, rulebook}
@@ -281,7 +259,7 @@ func (s Concatenate) to_nfa_design() NFADesign {
    for i := 0; i < len(first_nfa.accept_states); i++ {
       rules = append(
          rules,
-         FARule{first_nfa.accept_states[i], 0, second_nfa.start_state},
+         automata.FARule{first_nfa.accept_states[i], 0, second_nfa.start_state},
       )
    }
 
@@ -325,11 +303,11 @@ func (s Choose) to_nfa_design() NFADesign {
    unique_int++
    rules = append(
       rules,
-      FARule{start_state, 0, first_nfa.start_state},
+      automata.FARule{start_state, 0, first_nfa.start_state},
    )
    rules = append(
       rules,
-      FARule{start_state, 0, second_nfa.start_state},
+      automata.FARule{start_state, 0, second_nfa.start_state},
    )
 
    return NFADesign{start_state, accept_states, NFARuleBook{rules}}
@@ -358,13 +336,13 @@ func (s Repeat) to_nfa_design() NFADesign {
    start_state := unique_int
    unique_int++
    accept_states = append(accept_states, start_state)
-   rules = append(rules, FARule{start_state, 0, nfa.start_state})
+   rules = append(rules, automata.FARule{start_state, 0, nfa.start_state})
 
    // generate free moves
    for i := 0; i < len(nfa.accept_states); i++ {
       rules = append(
          rules,
-         FARule{nfa.accept_states[i], 0, nfa.start_state},
+         automata.FARule{nfa.accept_states[i], 0, nfa.start_state},
       )
    }
 
@@ -375,10 +353,10 @@ func (s Repeat) to_nfa_design() NFADesign {
 
 func main() {
    rulebook := NFARuleBook{
-      []FARule{
-         FARule{1, 'a', 1}, FARule{1, 'a', 2}, FARule{1, 0, 2},
-         FARule{2, 'b', 3},
-         FARule{3, 'b', 1}, FARule{3, 0, 2},
+      []automata.FARule{
+         automata.FARule{1, 'a', 1}, automata.FARule{1, 'a', 2}, automata.FARule{1, 0, 2},
+         automata.FARule{2, 'b', 3},
+         automata.FARule{3, 'b', 1}, automata.FARule{3, 0, 2},
       },
    }
    nfa_design := NFADesign{1, States{3}, rulebook}
