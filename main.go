@@ -8,64 +8,14 @@ import (
 
 var unique_int int = 0
 
-type NFARuleBook struct { // {{{
-   rules []a.FARule
-}
-
-func (s NFARuleBook) next_states(states a.States, character byte) a.States {
-   set := make(map[int]bool)
-   for x := 0; x < len(states); x++ {
-      inner_states := s.follow_rules_for(states[x], character)
-      for y := 0; y < len(inner_states); y++ {
-         set[inner_states[y]] = true
-      }
-   }
-   ret := a.States{}
-   for k := range set {
-      ret = append(ret, k)
-   }
-   return ret
-}
-
-func (s NFARuleBook) follow_rules_for(state int, character byte) a.States {
-   states := s.rules_for(state, character)
-   ret := a.States{}
-   for x := 0; x < len(states); x++ {
-      ret = append(ret, states[x].Follow())
-   }
-   return ret
-}
-
-func (s NFARuleBook) rules_for(state int, character byte) []a.FARule {
-   ret := []a.FARule{}
-   for x := 0; x < len(s.rules); x++ {
-      if s.rules[x].DoesApplyTo(state, character) {
-         ret = append(ret, s.rules[x])
-      }
-   }
-   return ret
-}
-
-func (s NFARuleBook) follow_free_moves(states a.States) a.States {
-   more_states := s.next_states(states, 0)
-
-   if more_states.IsSubsetOf(states) {
-      return states
-   } else {
-      return s.follow_free_moves(states.Union(more_states))
-   }
-}
-
-// }}}
-
 type NFA struct { // {{{
    current_states a.States
    accept_states a.States
-   rulebook NFARuleBook
+   rulebook a.NFARuleBook
 }
 
 func (s NFA) CurrentStates() a.States {
-   return s.rulebook.follow_free_moves(s.current_states)
+   return s.rulebook.FollowFreeMoves(s.current_states)
 }
 
 func (s NFA) is_accepting() bool {
@@ -82,7 +32,7 @@ func (s NFA) is_accepting() bool {
 }
 
 func (s *NFA) read_character(character byte) {
-   s.current_states = s.rulebook.next_states(s.CurrentStates(), character)
+   s.current_states = s.rulebook.NextStates(s.CurrentStates(), character)
 }
 
 func (s *NFA) read_string(str string) {
@@ -96,7 +46,7 @@ func (s *NFA) read_string(str string) {
 type NFADesign struct { // {{{
    start_state int
    accept_states a.States
-   rulebook NFARuleBook
+   rulebook a.NFARuleBook
 }
 
 func (s NFADesign) does_accept(str string) bool {
@@ -162,7 +112,7 @@ func (s Empty) to_nfa_design() NFADesign {
    var start_state int = unique_int
    unique_int++
    accept_states := []int{start_state}
-   rulebook := NFARuleBook{}
+   rulebook := a.NFARuleBook{}
 
    return NFADesign{start_state, accept_states, rulebook}
 }
@@ -186,7 +136,7 @@ func (s Literal) to_nfa_design() NFADesign {
    unique_int++
    accept_states := unique_int
    unique_int++
-   rulebook := NFARuleBook{
+   rulebook := a.NFARuleBook{
       []a.FARule{a.FARule{start_state, s.character, accept_states},
    }}
 
@@ -215,9 +165,9 @@ func (s Concatenate) to_nfa_design() NFADesign {
 
    start_state := first_nfa.start_state
    accept_states := second_nfa.accept_states
-   rules := first_nfa.rulebook.rules
-   for i := 0; i < len(second_nfa.rulebook.rules); i++ {
-      rules = append(rules, second_nfa.rulebook.rules[i])
+   rules := first_nfa.rulebook.Rules
+   for i := 0; i < len(second_nfa.rulebook.Rules); i++ {
+      rules = append(rules, second_nfa.rulebook.Rules[i])
    }
    for i := 0; i < len(first_nfa.accept_states); i++ {
       rules = append(
@@ -226,7 +176,7 @@ func (s Concatenate) to_nfa_design() NFADesign {
       )
    }
 
-   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+   return NFADesign{start_state, accept_states, a.NFARuleBook{rules}}
 }
 
 // }}}
@@ -256,9 +206,9 @@ func (s Choose) to_nfa_design() NFADesign {
    }
 
    // merge rules
-   rules := first_nfa.rulebook.rules
-   for i := 0; i < len(second_nfa.rulebook.rules); i++ {
-      rules = append(rules, second_nfa.rulebook.rules[i])
+   rules := first_nfa.rulebook.Rules
+   for i := 0; i < len(second_nfa.rulebook.Rules); i++ {
+      rules = append(rules, second_nfa.rulebook.Rules[i])
    }
 
    // generate free rules
@@ -273,7 +223,7 @@ func (s Choose) to_nfa_design() NFADesign {
       a.FARule{start_state, 0, second_nfa.start_state},
    )
 
-   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+   return NFADesign{start_state, accept_states, a.NFARuleBook{rules}}
 }
 
 // }}}
@@ -293,7 +243,7 @@ func (s Repeat) String() string {
 func (s Repeat) to_nfa_design() NFADesign {
    nfa := s.pattern.to_nfa_design()
    accept_states := nfa.accept_states
-   rules := nfa.rulebook.rules
+   rules := nfa.rulebook.Rules
 
    // generate accepting start state
    start_state := unique_int
@@ -309,13 +259,13 @@ func (s Repeat) to_nfa_design() NFADesign {
       )
    }
 
-   return NFADesign{start_state, accept_states, NFARuleBook{rules}}
+   return NFADesign{start_state, accept_states, a.NFARuleBook{rules}}
 }
 
 // }}}
 
 func main() {
-   rulebook := NFARuleBook{
+   rulebook := a.NFARuleBook{
       []a.FARule{
          a.FARule{1, 'a', 1}, a.FARule{1, 'a', 2}, a.FARule{1, 0, 2},
          a.FARule{2, 'b', 3},
