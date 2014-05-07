@@ -8,41 +8,6 @@ import (
 
 var unique_int int = 0
 
-type NFA struct { // {{{
-   current_states a.States
-   accept_states a.States
-   rulebook a.NFARuleBook
-}
-
-func (s NFA) CurrentStates() a.States {
-   return s.rulebook.FollowFreeMoves(s.current_states)
-}
-
-func (s NFA) is_accepting() bool {
-   curr := s.CurrentStates()
-   for i := 0; i < len(curr); i++ {
-      for j := 0; j < len(s.accept_states); j++ {
-         if curr[i] == s.accept_states[j] {
-            return true
-         }
-      }
-   }
-
-   return false
-}
-
-func (s *NFA) read_character(character byte) {
-   s.current_states = s.rulebook.NextStates(s.CurrentStates(), character)
-}
-
-func (s *NFA) read_string(str string) {
-   for i := 0; i < len(str); i++ {
-      s.read_character(str[i])
-   }
-}
-
-// }}}
-
 type NFADesign struct { // {{{
    start_state int
    accept_states a.States
@@ -51,16 +16,16 @@ type NFADesign struct { // {{{
 
 func (s NFADesign) does_accept(str string) bool {
    nfa := s.to_nfa_default()
-   nfa.read_string(str)
-   return nfa.is_accepting()
+   nfa.ReadString(str)
+   return nfa.IsAccepting()
 }
 
-func (s NFADesign) to_nfa_default() NFA {
+func (s NFADesign) to_nfa_default() a.NFA {
    return s.to_nfa(a.States{s.start_state})
 }
 
-func (s NFADesign) to_nfa(start a.States) NFA {
-   return NFA{start, s.accept_states, s.rulebook}
+func (s NFADesign) to_nfa(start a.States) a.NFA {
+   return a.NFA{start, s.accept_states, s.rulebook}
 }
 
 // }}}
@@ -71,7 +36,7 @@ type NFASimulation struct { // {{{
 
 func (s NFASimulation) next_state(states a.States, character byte) a.States {
    nfa := s.nfa_design.to_nfa(states)
-   nfa.read_character(character)
+   nfa.ReadCharacter(character)
    return nfa.CurrentStates()
 }
 
