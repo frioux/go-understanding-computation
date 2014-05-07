@@ -8,18 +8,6 @@ import (
 
 var unique_int int = 0
 
-type NFASimulation struct { // {{{
-   nfa_design a.NFADesign
-}
-
-func (s NFASimulation) next_state(states a.States, character byte) a.States {
-   nfa := s.nfa_design.ToNFA(states)
-   nfa.ReadCharacter(character)
-   return nfa.CurrentStates()
-}
-
-// }}}
-
 type Pattern interface { // {{{
    to_nfa_design() a.NFADesign
    precedence() int
@@ -216,13 +204,13 @@ func main() {
       },
    }
    nfa_design := a.NFADesign{1, a.States{3}, rulebook}
-   simulation := NFASimulation{nfa_design}
+   simulation := a.NFASimulation{nfa_design}
 
-   fmt.Println(simulation.next_state(a.States{1, 2}, 'a'))
-   fmt.Println(simulation.next_state(a.States{1, 2}, 'b'))
-   fmt.Println(simulation.next_state(a.States{3, 2}, 'b'))
-   fmt.Println(simulation.next_state(a.States{1, 3, 2}, 'b'))
-   fmt.Println(simulation.next_state(a.States{1, 3, 2}, 'a'))
+   fmt.Println(simulation.NextState(a.States{1, 2}, 'a'))
+   fmt.Println(simulation.NextState(a.States{1, 2}, 'b'))
+   fmt.Println(simulation.NextState(a.States{3, 2}, 'b'))
+   fmt.Println(simulation.NextState(a.States{1, 3, 2}, 'b'))
+   fmt.Println(simulation.NextState(a.States{1, 3, 2}, 'a'))
 
    stack := stack.Stack{'a', 'b', 'c', 'd', 'e'}
    fmt.Println(stack.Peek())
