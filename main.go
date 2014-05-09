@@ -7,30 +7,6 @@ import (
    r "github.com/frioux/go-understanding-computation/regex"
 )
 
-var unique_int int = 0
-
-type Empty struct { // {{{
-}
-
-func (s Empty) Precedence() int {
-   return 3
-}
-
-func (s Empty) String() string {
-   return ""
-}
-
-func (s Empty) ToNFADesign() a.NFADesign {
-   var start_state int = unique_int
-   unique_int++
-   accept_states := []int{start_state}
-   rulebook := a.NFARuleBook{}
-
-   return a.NFADesign{start_state, accept_states, rulebook}
-}
-
-// }}}
-
 type Literal struct { // {{{
    character byte
 }
@@ -44,10 +20,10 @@ func (s Literal) String() string {
 }
 
 func (s Literal) ToNFADesign() a.NFADesign {
-   var start_state int = unique_int
-   unique_int++
-   accept_states := unique_int
-   unique_int++
+   var start_state int = r.UniqueInt
+   r.UniqueInt++
+   accept_states := r.UniqueInt
+   r.UniqueInt++
    rulebook := a.NFARuleBook{
       []a.FARule{a.FARule{start_state, s.character, accept_states},
    }}
@@ -124,8 +100,8 @@ func (s Choose) ToNFADesign() a.NFADesign {
    }
 
    // generate free rules
-   var start_state int = unique_int
-   unique_int++
+   var start_state int = r.UniqueInt
+   r.UniqueInt++
    rules = append(
       rules,
       a.FARule{start_state, 0, first_nfa.StartState},
@@ -158,8 +134,8 @@ func (s Repeat) ToNFADesign() a.NFADesign {
    rules := nfa.Rulebook.Rules
 
    // generate accepting start state
-   start_state := unique_int
-   unique_int++
+   start_state := r.UniqueInt
+   r.UniqueInt++
    accept_states = append(accept_states, start_state)
    rules = append(rules, a.FARule{start_state, 0, nfa.StartState})
 
