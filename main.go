@@ -7,53 +7,6 @@ import (
    r "github.com/frioux/go-understanding-computation/regex"
 )
 
-type Choose struct { // {{{
-   first r.Pattern
-   second r.Pattern
-}
-
-func (s Choose) Precedence() int {
-   return 0
-}
-
-func (s Choose) String() string {
-   return r.Bracket(s.first, s.Precedence()) + "|" +
-      r.Bracket(s.second, s.Precedence())
-}
-
-func (s Choose) ToNFADesign() a.NFADesign {
-   first_nfa := s.first.ToNFADesign()
-   second_nfa := s.second.ToNFADesign()
-
-   // merge accept states
-   accept_states := first_nfa.AcceptStates
-   for i := 0; i < len(second_nfa.AcceptStates); i++ {
-      accept_states = append(accept_states, second_nfa.AcceptStates[i])
-   }
-
-   // merge rules
-   rules := first_nfa.Rulebook.Rules
-   for i := 0; i < len(second_nfa.Rulebook.Rules); i++ {
-      rules = append(rules, second_nfa.Rulebook.Rules[i])
-   }
-
-   // generate free rules
-   var start_state int = r.UniqueInt
-   r.UniqueInt++
-   rules = append(
-      rules,
-      a.FARule{start_state, 0, first_nfa.StartState},
-   )
-   rules = append(
-      rules,
-      a.FARule{start_state, 0, second_nfa.StartState},
-   )
-
-   return a.NFADesign{start_state, accept_states, a.NFARuleBook{rules}}
-}
-
-// }}}
-
 type Repeat struct { // {{{
    pattern r.Pattern
 }
