@@ -16,8 +16,8 @@ func (s Empty) String() string {
 }
 
 func (s Empty) ToNFADesign() a.NFADesign {
-	var start_state int = UniqueInt
-	UniqueInt++
+	var start_state int = unique_int
+	unique_int++
 	accept_states := []int{start_state}
 	rulebook := a.NFARuleBook{}
 

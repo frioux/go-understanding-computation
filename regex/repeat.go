@@ -22,8 +22,8 @@ func (s Repeat) ToNFADesign() a.NFADesign {
 	rules := nfa.Rulebook.Rules
 
 	// generate accepting start state
-	start_state := UniqueInt
-	UniqueInt++
+	start_state := unique_int
+	unique_int++
 	accept_states = append(accept_states, start_state)
 	rules = append(rules, a.FARule{start_state, 0, nfa.StartState})
 

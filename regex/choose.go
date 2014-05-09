@@ -35,8 +35,8 @@ func (s Choose) ToNFADesign() a.NFADesign {
 	}
 
 	// generate free rules
-	var start_state int = UniqueInt
-	UniqueInt++
+	var start_state int = unique_int
+	unique_int++
 	rules = append(
 		rules,
 		a.FARule{start_state, 0, first_nfa.StartState},

@@ -18,10 +18,10 @@ func (s Literal) String() string {
 }
 
 func (s Literal) ToNFADesign() a.NFADesign {
-	var start_state int = UniqueInt
-	UniqueInt++
-	accept_states := UniqueInt
-	UniqueInt++
+	var start_state int = unique_int
+	unique_int++
+	accept_states := unique_int
+	unique_int++
 	rulebook := a.NFARuleBook{
 		[]a.FARule{a.FARule{start_state, s.character, accept_states}}}
 

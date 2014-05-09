@@ -4,7 +4,7 @@ import (
 	a "github.com/frioux/go-understanding-computation/automata"
 )
 
-var UniqueInt int = 0
+var unique_int int = 0
 
 type Pattern interface {
 	ToNFADesign() a.NFADesign
