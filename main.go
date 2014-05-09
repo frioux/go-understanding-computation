@@ -7,32 +7,6 @@ import (
    r "github.com/frioux/go-understanding-computation/regex"
 )
 
-type Literal struct { // {{{
-   character byte
-}
-
-func (s Literal) Precedence() int {
-   return 3
-}
-
-func (s Literal) String() string {
-   return fmt.Sprintf("%c", s.character)
-}
-
-func (s Literal) ToNFADesign() a.NFADesign {
-   var start_state int = r.UniqueInt
-   r.UniqueInt++
-   accept_states := r.UniqueInt
-   r.UniqueInt++
-   rulebook := a.NFARuleBook{
-      []a.FARule{a.FARule{start_state, s.character, accept_states},
-   }}
-
-   return a.NFADesign{start_state, a.States{accept_states}, rulebook}
-}
-
-// }}}
-
 type Concatenate struct { // {{{
    first r.Pattern
    second r.Pattern
