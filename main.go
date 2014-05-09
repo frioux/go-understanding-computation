@@ -4,34 +4,15 @@ import (
    "fmt"
    "github.com/frioux/go-understanding-computation/stack"
    a "github.com/frioux/go-understanding-computation/automata"
+   r "github.com/frioux/go-understanding-computation/regex"
 )
 
 var unique_int int = 0
 
-type Pattern interface { // {{{
-   to_nfa_design() a.NFADesign
-   precedence() int
-   String() string
-}
-
-func bracket(s Pattern, precedence int) string {
-   if s.precedence() < precedence {
-      return "(" + s.String() + ")"
-   } else {
-      return s.String()
-   }
-}
-
-func matches(s Pattern, str string) bool {
-   return s.to_nfa_design().DoesAccept(str)
-}
-
-// }}}
-
 type Empty struct { // {{{
 }
 
-func (s Empty) precedence() int {
+func (s Empty) Precedence() int {
    return 3
 }
 
@@ -39,7 +20,7 @@ func (s Empty) String() string {
    return ""
 }
 
-func (s Empty) to_nfa_design() a.NFADesign {
+func (s Empty) ToNFADesign() a.NFADesign {
    var start_state int = unique_int
    unique_int++
    accept_states := []int{start_state}
@@ -54,7 +35,7 @@ type Literal struct { // {{{
    character byte
 }
 
-func (s Literal) precedence() int {
+func (s Literal) Precedence() int {
    return 3
 }
 
@@ -62,7 +43,7 @@ func (s Literal) String() string {
    return fmt.Sprintf("%c", s.character)
 }
 
-func (s Literal) to_nfa_design() a.NFADesign {
+func (s Literal) ToNFADesign() a.NFADesign {
    var start_state int = unique_int
    unique_int++
    accept_states := unique_int
@@ -77,22 +58,22 @@ func (s Literal) to_nfa_design() a.NFADesign {
 // }}}
 
 type Concatenate struct { // {{{
-   first Pattern
-   second Pattern
+   first r.Pattern
+   second r.Pattern
 }
 
-func (s Concatenate) precedence() int {
+func (s Concatenate) Precedence() int {
    return 1
 }
 
 func (s Concatenate) String() string {
-   return bracket(s.first, s.precedence()) +
-      bracket(s.second, s.precedence())
+   return r.Bracket(s.first, s.Precedence()) +
+      r.Bracket(s.second, s.Precedence())
 }
 
-func (s Concatenate) to_nfa_design() a.NFADesign {
-   first_nfa := s.first.to_nfa_design()
-   second_nfa := s.second.to_nfa_design()
+func (s Concatenate) ToNFADesign() a.NFADesign {
+   first_nfa := s.first.ToNFADesign()
+   second_nfa := s.second.ToNFADesign()
 
    start_state := first_nfa.StartState
    accept_states := second_nfa.AcceptStates
@@ -113,22 +94,22 @@ func (s Concatenate) to_nfa_design() a.NFADesign {
 // }}}
 
 type Choose struct { // {{{
-   first Pattern
-   second Pattern
+   first r.Pattern
+   second r.Pattern
 }
 
-func (s Choose) precedence() int {
+func (s Choose) Precedence() int {
    return 0
 }
 
 func (s Choose) String() string {
-   return bracket(s.first, s.precedence()) + "|" +
-      bracket(s.second, s.precedence())
+   return r.Bracket(s.first, s.Precedence()) + "|" +
+      r.Bracket(s.second, s.Precedence())
 }
 
-func (s Choose) to_nfa_design() a.NFADesign {
-   first_nfa := s.first.to_nfa_design()
-   second_nfa := s.second.to_nfa_design()
+func (s Choose) ToNFADesign() a.NFADesign {
+   first_nfa := s.first.ToNFADesign()
+   second_nfa := s.second.ToNFADesign()
 
    // merge accept states
    accept_states := first_nfa.AcceptStates
@@ -160,19 +141,19 @@ func (s Choose) to_nfa_design() a.NFADesign {
 // }}}
 
 type Repeat struct { // {{{
-   pattern Pattern
+   pattern r.Pattern
 }
 
-func (s Repeat) precedence() int {
+func (s Repeat) Precedence() int {
    return 2
 }
 
 func (s Repeat) String() string {
-   return bracket(s.pattern, s.precedence()) + "*"
+   return r.Bracket(s.pattern, s.Precedence()) + "*"
 }
 
-func (s Repeat) to_nfa_design() a.NFADesign {
-   nfa := s.pattern.to_nfa_design()
+func (s Repeat) ToNFADesign() a.NFADesign {
+   nfa := s.pattern.ToNFADesign()
    accept_states := nfa.AcceptStates
    rules := nfa.Rulebook.Rules
 
