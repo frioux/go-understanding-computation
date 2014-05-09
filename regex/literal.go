@@ -23,7 +23,7 @@ func (s Literal) ToNFADesign() a.NFADesign {
 	accept_states := unique_int
 	unique_int++
 	rulebook := a.NFARuleBook{
-		[]a.FARule{a.FARule{start_state, s.character, accept_states}}}
+		[]a.FARule{{start_state, s.character, accept_states}}}
 
 	return a.NFADesign{start_state, a.States{accept_states}, rulebook}
 }
