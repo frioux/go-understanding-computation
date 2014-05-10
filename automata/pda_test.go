@@ -35,6 +35,31 @@ func TestDPDARulebook(t *testing.T) {
 	testConfig(t, 2, "b$", config)
 }
 
+func TestDPDA(t *testing.T) {
+	rulebook := DPDARulebook{
+		[]PDARule{
+			{1, '(', 2, '$', []byte{'b', '$'}},
+			{2, '(', 2, 'b', []byte{'b', 'b'}},
+			{2, ')', 2, 'b', []byte{}},
+			{2, 0, 1, '$', []byte{'$'}},
+		},
+	}
+	dpda := DPDA{
+		PDAConfiguration{1, stack.Stack{'$'}}, []int{1}, rulebook,
+	}
+
+	if !dpda.IsAccepting() {
+		t.Errorf("dpda should be accepting")
+	}
+
+   dpda.ReadString("(()")
+
+	if dpda.IsAccepting() {
+		t.Errorf("dpda should not be accepting")
+	}
+	testConfig(t, 2, "b$", dpda.CurrentConfiguration)
+}
+
 func testConfig(t *testing.T, state int, stack string, config PDAConfiguration) {
 	if config.State != state {
 		t.Errorf("should be ", state, ", was ", config.State)
