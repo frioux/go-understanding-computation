@@ -20,3 +20,16 @@ func (s PDARule) DoesApplyTo(config PDAConfiguration, character byte) bool {
 		s.PopCharacter == config.Stack.Peek() &&
 		s.Character == character
 }
+
+func (s PDARule) Follow(config PDAConfiguration) PDAConfiguration {
+	return PDAConfiguration{s.NextState, s.NextStack(config)}
+}
+
+func (s PDARule) NextStack(config PDAConfiguration) stack.Stack {
+	ret := config.Stack
+	ret.Pop()
+	for i := len(s.PushCharacters) - 1; i > -1; i-- {
+		ret.Push(s.PushCharacters[i])
+	}
+	return ret
+}
