@@ -16,3 +16,7 @@ func (s *Stack) Pop() byte {
 func (s Stack) Peek() byte {
 	return s[len(s)-1]
 }
+
+func (s Stack) String() string {
+	return "Stack «" + string(s) + "»"
+}
