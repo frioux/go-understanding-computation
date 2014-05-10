@@ -52,7 +52,7 @@ func TestDPDA(t *testing.T) {
 		t.Errorf("dpda should be accepting")
 	}
 
-   dpda.ReadString("(()")
+	dpda.ReadString("(()")
 
 	if dpda.IsAccepting() {
 		t.Errorf("dpda should not be accepting")
