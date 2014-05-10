@@ -13,10 +13,33 @@ func TestPDA(t *testing.T) {
 		t.Errorf("should be true")
 	}
 	followed := rule.Follow(config)
-	if followed.State != 2 {
-		t.Errorf("should be 2, was ", followed.State)
+	testConfig(t, 2, "b$", followed)
+}
+
+func TestDPDARulebook(t *testing.T) {
+	config := PDAConfiguration{1, stack.Stack{'$'}}
+
+	rulebook := DPDARulebook{
+		[]PDARule{
+			{1, '(', 2, '$', []byte{'b', '$'}},
+			{2, '(', 2, 'b', []byte{'b', 'b'}},
+			{2, ')', 2, 'b', []byte{}},
+			{2, 0, 1, '$', []byte{'$'}},
+		},
 	}
-	if followed.Stack.String() != "Stack «b$»" {
-		t.Errorf("should be «b$», was " + followed.Stack.String())
+	config = rulebook.NextConfiguration(config, '(')
+	testConfig(t, 2, "b$", config)
+	config = rulebook.NextConfiguration(config, '(')
+	testConfig(t, 2, "bb$", config)
+	config = rulebook.NextConfiguration(config, ')')
+	testConfig(t, 2, "b$", config)
+}
+
+func testConfig(t *testing.T, state int, stack string, config PDAConfiguration) {
+	if config.State != state {
+		t.Errorf("should be ", state, ", was ", config.State)
+	}
+	if config.Stack.String() != "Stack «"+stack+"»" {
+		t.Errorf("should be «b$», was " + config.Stack.String())
 	}
 }
