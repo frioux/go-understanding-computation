@@ -1,14 +1,14 @@
 package automata
 
 type DPDA struct {
-	CurrentConfiguration PDAConfiguration
+	currentConfiguration PDAConfiguration
 	AcceptStates         []int
 	Rulebook             DPDARulebook
 }
 
 func (s DPDA) IsAccepting() bool {
 	for i := 0; i < len(s.AcceptStates); i++ {
-		if s.AcceptStates[i] == s.CurrentConfiguration.State {
+		if s.AcceptStates[i] == s.CurrentConfiguration().State {
 			return true
 		}
 	}
@@ -16,12 +16,16 @@ func (s DPDA) IsAccepting() bool {
 }
 
 func (s *DPDA) ReadCharacter(char byte) {
-	s.CurrentConfiguration =
-		s.Rulebook.NextConfiguration(s.CurrentConfiguration, char)
+	s.currentConfiguration =
+		s.Rulebook.NextConfiguration(s.CurrentConfiguration(), char)
 }
 
 func (s *DPDA) ReadString(str string) {
 	for i := 0; i < len(str); i++ {
 		s.ReadCharacter(str[i])
 	}
+}
+
+func (s *DPDA) CurrentConfiguration() PDAConfiguration {
+	return s.Rulebook.FollowFreeMoves(s.currentConfiguration)
 }
