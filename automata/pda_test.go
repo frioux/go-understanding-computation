@@ -58,6 +58,15 @@ func TestDPDA(t *testing.T) {
 		t.Errorf("dpda should not be accepting")
 	}
 	testConfig(t, 2, "b$", dpda.CurrentConfiguration)
+
+	config := PDAConfiguration{2, stack.Stack{'$'}}
+	config = rulebook.FollowFreeMoves(config)
+	if config.State != 1 {
+		t.Errorf("config.State should be 1")
+	}
+	if config.Stack.String() != "Stack «$»" {
+		t.Errorf("should be «$», was " + config.Stack.String())
+	}
 }
 
 func testConfig(t *testing.T, state int, stack string, config PDAConfiguration) {
