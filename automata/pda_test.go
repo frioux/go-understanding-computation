@@ -76,6 +76,31 @@ func TestDPDA(t *testing.T) {
 		t.Errorf("dpda should be accepting")
 	}
 	testConfig(t, 1, "$", dpda.CurrentConfiguration())
+
+	dpda = DPDA{
+		PDAConfiguration{
+			1,
+			stack.Stack{'$'},
+		},
+		[]int{1},
+		DPDARulebook{
+			[]PDARule{
+				{1, '(', 2, '$', []byte{'b', '$'}},
+				{2, '(', 2, 'b', []byte{'b', 'b'}},
+				{2, ')', 2, 'b', []byte{}},
+				{2, 0, 1, '$', []byte{'$'}},
+			},
+		},
+	}
+
+	dpda.ReadString("())")
+	testConfig(t, StuckState, "$", dpda.CurrentConfiguration())
+	if dpda.IsAccepting() {
+		t.Errorf("dpda should not be accepting")
+	}
+	if !dpda.IsStuck() {
+		t.Errorf("dpda should be stuck")
+	}
 }
 
 func TestDPDADesign(t *testing.T) {
@@ -95,6 +120,9 @@ func TestDPDADesign(t *testing.T) {
 		t.Errorf("dpdaDesign should be accepting")
 	}
 	if dpdaDesign.DoesAccept("(()(()(()()(()()))()") {
+		t.Errorf("dpdaDesign should not be accepting")
+	}
+	if dpdaDesign.DoesAccept("())") {
 		t.Errorf("dpdaDesign should not be accepting")
 	}
 }

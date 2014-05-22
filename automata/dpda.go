@@ -16,16 +16,27 @@ func (s DPDA) IsAccepting() bool {
 }
 
 func (s *DPDA) ReadCharacter(char byte) {
-	s.currentConfiguration =
-		s.Rulebook.NextConfiguration(s.CurrentConfiguration(), char)
+	s.currentConfiguration = s.NextConfiguration(char)
 }
 
 func (s *DPDA) ReadString(str string) {
-	for i := 0; i < len(str); i++ {
+	for i := 0; !s.IsStuck() && i < len(str); i++ {
 		s.ReadCharacter(str[i])
 	}
 }
 
 func (s *DPDA) CurrentConfiguration() PDAConfiguration {
 	return s.Rulebook.FollowFreeMoves(s.currentConfiguration)
+}
+
+func (s DPDA) NextConfiguration(char byte) PDAConfiguration {
+	if s.Rulebook.DoesApplyTo(s.CurrentConfiguration(), char) {
+		return s.Rulebook.NextConfiguration(s.CurrentConfiguration(), char)
+	} else {
+		return s.CurrentConfiguration().Stuck()
+	}
+}
+
+func (s DPDA) IsStuck() bool {
+	return s.CurrentConfiguration().IsStuck()
 }

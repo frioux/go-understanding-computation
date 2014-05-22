@@ -2,9 +2,19 @@ package automata
 
 import "github.com/frioux/go-understanding-computation/stack"
 
+const StuckState int = -1
+
 type PDAConfiguration struct {
 	State int
 	Stack stack.Stack
+}
+
+func (s PDAConfiguration) Stuck() PDAConfiguration {
+	return PDAConfiguration{StuckState, s.Stack}
+}
+
+func (s PDAConfiguration) IsStuck() bool {
+	return s.State == StuckState
 }
 
 type PDARule struct {
