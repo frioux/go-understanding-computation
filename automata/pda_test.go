@@ -114,15 +114,9 @@ func TestDPDA(t *testing.T) {
 		},
 	}
 	dpdaDesign := DPDADesign{1, '$', []int{1}, rulebook}
-	if !dpdaDesign.DoesAccept("ababab") {
-		t.Errorf("dpda should accept ababab")
-	}
-	if !dpdaDesign.DoesAccept("bbbaaaab") {
-		t.Errorf("dpda should accept bbbaaaab")
-	}
-	if dpdaDesign.DoesAccept("baa") {
-		t.Errorf("dpda should not accept baa")
-	}
+	testAccept(dpdaDesign, "ababab", true, t)
+	testAccept(dpdaDesign, "bbbaaaab", true, t)
+	testAccept(dpdaDesign, "baa", false, t)
 
 	rulebook = DPDARulebook{
 		[]PDARule{
