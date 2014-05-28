@@ -123,6 +123,44 @@ func TestDPDA(t *testing.T) {
 	if dpdaDesign.DoesAccept("baa") {
 		t.Errorf("dpda should not accept baa")
 	}
+
+	rulebook = DPDARulebook{
+		[]PDARule{
+			{1, 'a', 1, '$', []byte{'a', '$'}},
+			{1, 'a', 1, 'a', []byte{'a', 'a'}},
+			{1, 'a', 1, 'b', []byte{'a', 'b'}},
+			{1, 'b', 1, '$', []byte{'b', '$'}},
+			{1, 'b', 1, 'a', []byte{'b', 'a'}},
+			{1, 'b', 1, 'b', []byte{'b', 'b'}},
+			{1, 'm', 2, '$', []byte{'$'}},
+			{1, 'm', 2, 'a', []byte{'a'}},
+			{1, 'm', 2, 'b', []byte{'b'}},
+			{2, 'a', 2, 'a', []byte{}},
+			{2, 'b', 2, 'b', []byte{}},
+			{2, 0, 3, '$', []byte{'$'}},
+		},
+	}
+	dpdaDesign = DPDADesign{1, '$', []int{3}, rulebook}
+	testAccept(dpdaDesign, "abmba", true, t)
+	testAccept(dpdaDesign, "babbamabbab", true, t)
+	testAccept(dpdaDesign, "abmb", false, t)
+	testAccept(dpdaDesign, "baambaa", false, t)
+}
+
+type DoesAccepter interface {
+	DoesAccept(string) bool
+}
+
+func testAccept(d DoesAccepter, str string, should bool, t *testing.T) {
+	if should {
+		if !d.DoesAccept(str) {
+			t.Errorf("acceptor should accept", str)
+		}
+	} else {
+		if d.DoesAccept(str) {
+			t.Errorf("acceptor not should accept", str)
+		}
+	}
 }
 
 func TestDPDADesign(t *testing.T) {
