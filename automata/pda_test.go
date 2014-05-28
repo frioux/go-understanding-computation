@@ -101,6 +101,28 @@ func TestDPDA(t *testing.T) {
 	if !dpda.IsStuck() {
 		t.Errorf("dpda should be stuck")
 	}
+
+	rulebook = DPDARulebook{
+		[]PDARule{
+			{1, 'a', 2, '$', []byte{'a', '$'}},
+			{1, 'b', 2, '$', []byte{'b', '$'}},
+			{2, 'a', 2, 'a', []byte{'a', 'a'}},
+			{2, 'b', 2, 'b', []byte{'b', 'b'}},
+			{2, 'a', 2, 'b', []byte{}},
+			{2, 'b', 2, 'a', []byte{}},
+			{2, 0, 1, '$', []byte{'$'}},
+		},
+	}
+	dpdaDesign := DPDADesign{1, '$', []int{1}, rulebook}
+	if !dpdaDesign.DoesAccept("ababab") {
+		t.Errorf("dpda should accept ababab")
+	}
+	if !dpdaDesign.DoesAccept("bbbaaaab") {
+		t.Errorf("dpda should accept bbbaaaab")
+	}
+	if dpdaDesign.DoesAccept("baa") {
+		t.Errorf("dpda should not accept baa")
+	}
 }
 
 func TestDPDADesign(t *testing.T) {
