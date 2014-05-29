@@ -232,6 +232,41 @@ func TestNPDADesign(t *testing.T) {
 	})
 }
 
+func TestNPDA(t *testing.T) {
+	rulebook := NPDARulebook{
+		[]PDARule{
+			{1, 'a', 1, '$', []byte{'a', '$'}},
+			{1, 'a', 1, 'a', []byte{'a', 'a'}},
+			{1, 'a', 1, 'b', []byte{'a', 'b'}},
+
+			{1, 'b', 1, '$', []byte{'b', '$'}},
+			{1, 'b', 1, 'a', []byte{'b', 'a'}},
+			{1, 'b', 1, 'b', []byte{'b', 'b'}},
+
+			{1, 0, 2, '$', []byte{'$'}},
+			{1, 0, 2, 'a', []byte{'a'}},
+			{1, 0, 2, 'b', []byte{'b'}},
+
+			{2, 'a', 2, 'a', []byte{}},
+			{2, 'b', 2, 'b', []byte{}},
+			{2, 0, 3, '$', []byte{'$'}},
+		},
+	}
+	npdaDesign := NPDADesign{ 1, '$', States{3}, rulebook }
+	if !npdaDesign.DoesAccept("abba") {
+		t.Errorf("npdaDesign should accept")
+	}
+	if !npdaDesign.DoesAccept("babbaabbab") {
+		t.Errorf("npdaDesign should accept")
+	}
+	if npdaDesign.DoesAccept("abb") {
+		t.Errorf("npdaDesign should no accept")
+	}
+	if npdaDesign.DoesAccept("baabaa") {
+		t.Errorf("npdaDesign should no accept")
+	}
+}
+
 func testConfigs(t *testing.T, got, expected PDAConfigurations) {
 	if !got.
 		IsSubsetOf(expected) && len(got) != len(expected) {
