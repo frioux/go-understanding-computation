@@ -1,12 +1,20 @@
 package automata
 
-import "github.com/frioux/go-understanding-computation/stack"
+import (
+	"fmt"
+
+	"github.com/frioux/go-understanding-computation/stack"
+)
 
 const StuckState int = -1
 
 type PDAConfiguration struct {
 	State int
 	Stack stack.Stack
+}
+
+func (s PDAConfiguration) String() string {
+	return fmt.Sprintf("%i %s", s.State, s.Stack)
 }
 
 func (s PDAConfiguration) Stuck() PDAConfiguration {
