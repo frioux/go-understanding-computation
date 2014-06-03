@@ -16,10 +16,9 @@ func TestP91(t *testing.T) {
 		"", "a", "ab", "aba", "abab", "abaab",
 	}
 
-	for i := 0; i < len(shouldMatch); i++ {
-		str := shouldMatch[i]
-		if !Matches(pattern, str) {
-			t.Errorf("«"+str+"»", "should match")
+	for _, v := range shouldMatch {
+		if !Matches(pattern, v) {
+			t.Errorf("«"+v+"»", "should match")
 		}
 	}
 	if Matches(pattern, "abba") {

@@ -7,8 +7,8 @@ type DPDA struct {
 }
 
 func (s DPDA) IsAccepting() bool {
-	for i := 0; i < len(s.AcceptStates); i++ {
-		if s.AcceptStates[i] == s.CurrentConfiguration().State {
+	for _, v := range s.AcceptStates {
+		if v == s.CurrentConfiguration().State {
 			return true
 		}
 	}

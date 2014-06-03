@@ -25,13 +25,13 @@ func (s Concatenate) ToNFADesign() a.NFADesign {
 	start_state := first_nfa.StartState
 	accept_states := second_nfa.AcceptStates
 	rules := first_nfa.Rulebook.Rules
-	for i := 0; i < len(second_nfa.Rulebook.Rules); i++ {
-		rules = append(rules, second_nfa.Rulebook.Rules[i])
+	for _, v := range second_nfa.Rulebook.Rules {
+		rules = append(rules, v)
 	}
-	for i := 0; i < len(first_nfa.AcceptStates); i++ {
+	for _, v := range first_nfa.AcceptStates {
 		rules = append(
 			rules,
-			a.FARule{first_nfa.AcceptStates[i], 0, second_nfa.StartState},
+			a.FARule{v, 0, second_nfa.StartState},
 		)
 	}
 

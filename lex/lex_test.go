@@ -29,9 +29,9 @@ func testSyntax(t *testing.T, got, expected Tokens) {
 		t.Errorf("got", len(got), "tokens and expected", len(expected), "tokens")
 		return
 	}
-	for i := 0; i < gotLen; i++ {
-		if got[i] != expected[i] {
-			t.Errorf("got["+string(i)+"]:", got[i], "expected["+string(i)+"]:", expected[i])
+	for i, v := range got {
+		if v != expected[i] {
+			t.Errorf("got["+string(i)+"]:", v, "expected["+string(i)+"]:", expected[i])
 			return
 		}
 	}

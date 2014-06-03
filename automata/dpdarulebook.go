@@ -10,9 +10,9 @@ func (s DPDARulebook) NextConfiguration(config PDAConfiguration, char byte) PDAC
 
 func (s DPDARulebook) RuleFor(config PDAConfiguration, char byte) PDARule {
 
-	for i := 0; i < len(s.Rules); i++ {
-		if s.Rules[i].DoesApplyTo(config, char) {
-			return s.Rules[i]
+	for _, v := range s.Rules {
+		if v.DoesApplyTo(config, char) {
+			return v
 		}
 	}
 

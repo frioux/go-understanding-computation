@@ -24,14 +24,14 @@ func (s Choose) ToNFADesign() a.NFADesign {
 
 	// merge accept states
 	accept_states := first_nfa.AcceptStates
-	for i := 0; i < len(second_nfa.AcceptStates); i++ {
-		accept_states = append(accept_states, second_nfa.AcceptStates[i])
+	for _, v := range second_nfa.AcceptStates {
+		accept_states = append(accept_states, v)
 	}
 
 	// merge rules
 	rules := first_nfa.Rulebook.Rules
-	for i := 0; i < len(second_nfa.Rulebook.Rules); i++ {
-		rules = append(rules, second_nfa.Rulebook.Rules[i])
+	for _, v := range second_nfa.Rulebook.Rules {
+		rules = append(rules, v)
 	}
 
 	// generate free rules

@@ -105,11 +105,11 @@ func (s LexicalAnalyzer) ruleMatching(str string) (rule, string) {
 	matches := [][][]byte{}
 	rules := []rule{}
 
-	for i := 0; i < len(grammar); i++ {
-		match := s.matchAtBeginning(grammar[i].pattern, str)
+	for _, v := range grammar {
+		match := s.matchAtBeginning(v.pattern, str)
 		if match != nil {
 			matches = append(matches, match)
-			rules = append(rules, grammar[i])
+			rules = append(rules, v)
 		}
 	}
 
@@ -131,12 +131,12 @@ func (s LexicalAnalyzer) ruleWithLongestMatch(rules []rule, matches [][][]byte) 
 	rule := rules[0]
 	matchRet := matches[0][1]
 	maxLen := len(matches[0][0])
-	for i := 0; i < len(matches); i++ {
-		newLen := len(matches[i][0])
+	for i, v := range matches {
+		newLen := len(v[0])
 		if maxLen < newLen {
 			rule = rules[i]
 			maxLen = newLen
-			matchRet = matches[i][1]
+			matchRet = v[1]
 		}
 	}
 	return rule, string(matchRet)

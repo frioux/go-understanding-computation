@@ -12,9 +12,9 @@ func (s NFA) CurrentStates() States {
 
 func (s NFA) IsAccepting() bool {
 	curr := s.CurrentStates()
-	for i := 0; i < len(curr); i++ {
-		for j := 0; j < len(s.AcceptStates); j++ {
-			if curr[i] == s.AcceptStates[j] {
+	for _, x := range curr {
+		for _, y := range s.AcceptStates {
+			if x == y {
 				return true
 			}
 		}

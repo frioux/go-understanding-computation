@@ -28,10 +28,10 @@ func (s Repeat) ToNFADesign() a.NFADesign {
 	rules = append(rules, a.FARule{start_state, 0, nfa.StartState})
 
 	// generate free moves
-	for i := 0; i < len(nfa.AcceptStates); i++ {
+	for _, v := range nfa.AcceptStates {
 		rules = append(
 			rules,
-			a.FARule{nfa.AcceptStates[i], 0, nfa.StartState},
+			a.FARule{v, 0, nfa.StartState},
 		)
 	}
 

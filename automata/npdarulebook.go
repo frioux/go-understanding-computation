@@ -7,10 +7,10 @@ type NPDARulebook struct {
 func (s NPDARulebook) NextConfigurations(configs PDAConfigurations, char byte) PDAConfigurations {
 	ret := PDAConfigurations{}
 
-	for i := 0; i < len(configs); i++ {
-		configs := s.FollowRulesFor(configs[i], char)
-		for j := 0; j < len(configs); j++ {
-			ret = append(ret, configs[j])
+	for _, x := range configs {
+		configs := s.FollowRulesFor(x, char)
+		for _, y := range configs {
+			ret = append(ret, y)
 		}
 	}
 
@@ -21,8 +21,8 @@ func (s NPDARulebook) FollowRulesFor(config PDAConfiguration, char byte) PDAConf
 	rules := s.RulesFor(config, char)
 
 	ret := PDAConfigurations{}
-	for i := 0; i < len(rules); i++ {
-		ret = append(ret, rules[i].Follow(config))
+	for _, v := range rules {
+		ret = append(ret, v.Follow(config))
 	}
 
 	return ret
@@ -32,9 +32,9 @@ func (s NPDARulebook) RulesFor(config PDAConfiguration, char byte) []PDARule {
 
 	rules := []PDARule{}
 
-	for i := 0; i < len(s.Rules); i++ {
-		if s.Rules[i].DoesApplyTo(config, char) {
-			rules = append(rules, s.Rules[i])
+	for _, v := range s.Rules {
+		if v.DoesApplyTo(config, char) {
+			rules = append(rules, v)
 		}
 	}
 

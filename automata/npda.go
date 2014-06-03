@@ -8,9 +8,9 @@ type NPDA struct {
 
 func (s NPDA) IsAccepting() bool {
 	configs := s.CurrentConfigurations()
-	for i := 0; i < len(configs); i++ {
-		for j := 0; j < len(s.AcceptStates); j++ {
-			if configs[i].State == s.AcceptStates[j] {
+	for _, x := range configs {
+		for _, y := range s.AcceptStates {
+			if x.State == y {
 				return true
 			}
 		}
