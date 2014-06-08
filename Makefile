@@ -1,10 +1,7 @@
 run:
 	go run main.go
 test:
-	go test ./automata
-	go test ./regex
-	go test ./stack
-	go test ./lex
+	go test -cpu=1,2,4 ./...
 cov:
 	go test -cover ./automata
 	go test -cover ./regex
